@@ -37,8 +37,8 @@ const connection = require('../helper/db');
         try{
             const data = schema.value;
             // Insert ---- 
-            let sql = "INSERT INTO template (title,description,category,thumbnail,status)"+
-                    " VALUES ('"+data.title+"','"+data.description+"','"+data.category+"','"+req.file.filename+"','"+data.status+"')";
+            let sql = "INSERT INTO template (title,description,category,status)"+
+                    " VALUES ('"+data.title+"','"+data.description+"','"+data.category+"','"+data.status+"')";
             await connection.query(sql, function (err, result, fields) {
                 if (err) throw err;
                 resp.status = true;
