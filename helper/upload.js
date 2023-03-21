@@ -15,7 +15,7 @@ const upload = multer({
 const up_template = multer({
     storage:multer.diskStorage({
         destination:function(req,file,cb){
-            cb(null, "uploads/templates");
+            cb(null, "uploads/tmp");
         },
         filename:function(req,file,cb){
             cb(null, file.fieldname+"-"+Date.now()+".zip");

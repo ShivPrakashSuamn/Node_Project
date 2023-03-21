@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const connection = require('../helper/db');
+const path = require("path");
 
     const index = async(req,res)=>{     // index    ----------------------
         var resp = {status:false,message:'Oops Something went wrong', data:null};
@@ -37,6 +38,7 @@ const connection = require('../helper/db');
         try{
             const data = schema.value;
             // Insert ---- 
+            var fs = require('fs');
             let sql = "INSERT INTO template (title,description,category,status)"+
                     " VALUES ('"+data.title+"','"+data.description+"','"+data.category+"','"+data.status+"')";
             await connection.query(sql, function (err, result, fields) {
@@ -44,6 +46,12 @@ const connection = require('../helper/db');
                 resp.status = true;
                 resp.message = 'Data store SuccessFull!';
                 resp.data = result;
+
+                    let id = result.insertId;
+                    var dir = __dirname + '/uploads/templates/'+id;
+                    console.log("dir=>",dir)
+                    fs.mkdirSync(dir, 0744);
+
                 console.log('resp-',resp);
                 return res.json(resp);
             });
