@@ -2,6 +2,8 @@ const Joi = require('joi');
 const connection = require('../helper/db');
 const path = require("path");
 const config = require('../config');
+const extract = require('extract-zip');
+
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
     try {
@@ -46,12 +48,34 @@ const store = async (req, res) => {    // store    ----------------------
             resp.status = true;
             resp.message = 'Data store SuccessFull!';
             resp.data = result;
+            // Folder create---
+                let id = result.insertId;
+                var dir = config.BASEURL +'/uploads/templates/' + id;
+                console.log("dir=>", dir)
+                fs.mkdirSync(dir, 0744);
+            // extract zip on this folder 
+                console.log('filename-',req.file.filename);
+                let source = config.BASEURL +'/uploads/tmp/'+req.file.filename;
+                let target = config.BASEURL +'/uploads/templates/'+id;
+                opne_zip(source, target);
+                // try {
+                //     extract(source, { dir: target });
+                //         //fs.rmdirSync(extract(source, { dir: target }))
+                //         //fs.rmSync(extract(source, { dir: target }), { recursive: true, force: true });
+                //     console.log('-Extraction complete-');
+                // } catch (err) {
+                //     console.log('error -', err);
+                // }
+            //  tmp Zip: file delet --
+                let deletefile = config.BASEURL +'/uploads/tmp/'+req.file.filename;
+                // fs.unlink(deletefile, function(err) {
+                //     if(err){
+                //         console.log('delete file error-',err);
+                //     } else{
+                //         console.log('delete file SuccessFull');
+                //     }
 
-            let id = result.insertId;
-            var dir = config.BASEURL + '/uploads/templates/' + id;
-            console.log("dir=>", dir)
-            fs.mkdirSync(dir, 0744);
-
+                // });
             console.log('resp-', resp);
             return res.json(resp);
         });
