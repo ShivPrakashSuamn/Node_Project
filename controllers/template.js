@@ -2,7 +2,7 @@ const Joi = require('joi');
 const connection = require('../helper/db');
 const path = require("path");
 const config = require('../config');
-const { opne_zip, createFolder } = require('../helper/common')
+const { opne_zip, createFolder, folderExist } = require('../helper/common')
 
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
@@ -40,26 +40,26 @@ const store = async (req, res) => {    // store    ----------------------
     try {
         const data = schema.value;
         // Insert ---- 
-        var fs = require('fs');
-        let sql = "INSERT INTO template (title,description,category,status)" +
-            " VALUES ('" + data.title + "','" + data.description + "','" + data.category + "','" + data.status + "')";
-        await connection.query(sql, async function (err, result, fields) {
-            if (err) throw err;
-            // Folder create---
-            let id = result.insertId;
-            var dir = config.BASEURL + '/uploads/templates/' + id;
-            console.log("dir=>", dir)
-            await createFolder(dir);
-            // extract zip on this folder 
+        // let sql = "INSERT INTO template (title,description,category,status)" +
+        //     " VALUES ('" + data.title + "','" + data.description + "','" + data.category + "','" + data.status + "')";
+        // await connection.query(sql, async function (err, result, fields) {
+        // if (err) throw err;
+        // Folder create---
+        let id = 3;//result.insertId;
+        var dir = config.BASEURL + '/uploads/templates/' + id;
+        await createFolder(dir);
+        // extract zip on this folder 
+        if (folderExist(dir)) {
             let source = config.BASEURL + '/uploads/tmp/' + req.file.filename;
             let target = config.BASEURL + '/uploads/templates/' + id;
             await opne_zip(source, target, true);
+        }
 
-            resp.status = true;
-            resp.message = 'Data store SuccessFull!';
-            resp.data = result;
-            return res.json(resp);
-        });
+        resp.status = true;
+        resp.message = 'Data store SuccessFull!';
+        resp.data = {};//result;
+        return res.json(resp);
+        // });
     } catch (e) {
         console.log('catch error ', e)
         return res.json(resp);

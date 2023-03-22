@@ -2,6 +2,7 @@ const extract = require('extract-zip');
 var fs = require('fs');
 
 const opne_zip = async (source, target) => {
+    console.log('open_zip')
     try {
         let x = extract(source, { dir: target });
         if (x) {
@@ -24,4 +25,8 @@ const createFolder = async (path) => {
     }
 }
 
-module.exports = { opne_zip, createFolder };
+const folderExist = async (path) => {
+    return fs.existsSync(path);
+}
+
+module.exports = { opne_zip, createFolder, folderExist };
