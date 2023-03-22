@@ -57,10 +57,11 @@ const store = async (req, res) => {    // store    ----------------------
                 console.log('filename-',req.file.filename);
                 let source = config.BASEURL +'/uploads/tmp/'+req.file.filename;
                 let target = config.BASEURL +'/uploads/templates/'+id;
+
                 opne_zip(source, target);
                 // try {
                 //     extract(source, { dir: target });
-                //         //fs.rmdirSync(extract(source, { dir: target }))
+                //         //fs. (extract(source, { dir: target }))
                 //         //fs.rmSync(extract(source, { dir: target }), { recursive: true, force: true });
                 //     console.log('-Extraction complete-');
                 // } catch (err) {
@@ -68,14 +69,15 @@ const store = async (req, res) => {    // store    ----------------------
                 // }
             //  tmp Zip: file delet --
                 let deletefile = config.BASEURL +'/uploads/tmp/'+req.file.filename;
-                // fs.unlink(deletefile, function(err) {
-                //     if(err){
-                //         console.log('delete file error-',err);
-                //     } else{
-                //         console.log('delete file SuccessFull');
-                //     }
+                fs.unlink(deletefile, function(err) {
+                    if(err){
+                        console.log('delete file error-',err);
+                    } else{
+                        console.log('delete file SuccessFull');
+                    }
 
-                // });
+                });
+
             console.log('resp-', resp);
             return res.json(resp);
         });
