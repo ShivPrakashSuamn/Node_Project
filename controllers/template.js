@@ -2,7 +2,7 @@ const Joi = require('joi');
 const connection = require('../helper/db');
 const path = require("path");
 const config = require('../config');
-const { opne_zip, createFolder, folderExist } = require('../helper/common')
+const { opne_zip, createFolder, folderExist,deleteTmpZip } = require('../helper/common')
 
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
@@ -40,12 +40,12 @@ const store = async (req, res) => {    // store    ----------------------
     try {
         const data = schema.value;
         // Insert ---- 
-        // let sql = "INSERT INTO template (title,description,category,status)" +
-        //     " VALUES ('" + data.title + "','" + data.description + "','" + data.category + "','" + data.status + "')";
-        // await connection.query(sql, async function (err, result, fields) {
-        // if (err) throw err;
+        let sql = "INSERT INTO template (title,description,category,status)" +
+            " VALUES ('" + data.title + "','" + data.description + "','" + data.category + "','" + data.status + "')";
+        await connection.query(sql, async function (err, result, fields) {
+        if (err) throw err;
         // Folder create---
-        let id = 3;//result.insertId;
+        let id = result.insertId;
         var dir = config.BASEURL + '/uploads/templates/' + id;
         await createFolder(dir);
         // extract zip on this folder 
@@ -53,13 +53,27 @@ const store = async (req, res) => {    // store    ----------------------
             let source = config.BASEURL + '/uploads/tmp/' + req.file.filename;
             let target = config.BASEURL + '/uploads/templates/' + id;
             await opne_zip(source, target, true);
+
+            // repo path  add table, 
+            var repo_pat= '/uploads/templates/'+ id;
+            var index_pat = '/uploads/templates/'+ id +'/index.html';
+            var draft_pat = '/uploads/templates/'+ id +'/draft.html';
+            var thumb_pat = '/uploads/templates/'+ id +'/thumbnail.jpg';
+            let sql = "update template set repo_path='"+repo_pat+"',index_path='"+index_pat+"',draft_path='"+draft_pat+"',thumbnail='"+thumb_pat+"' where id = " + id;
+            await connection.query(sql, async function (err, result, fields) {
+                if (err) throw err;
+
+                await deleteTmpZip(source);
+            });
+
+            
         }
 
         resp.status = true;
         resp.message = 'Data store SuccessFull!';
         resp.data = {};//result;
         return res.json(resp);
-        // });
+        });
     } catch (e) {
         console.log('catch error ', e)
         return res.json(resp);
