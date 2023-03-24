@@ -26,11 +26,11 @@ const folderExist = async (path) => {
 }
 // Delete file ----
 const deleteTmpZip = async (file_path) => {
-   // console.log('delete path-', file_path);
+    // console.log('delete path-', file_path);
     if (folderExist(file_path)) {
-         fs.unlinkSync(file_path);
+        fs.unlinkSync(file_path);
         return true;
     }
 }
 
-module.exports = { opne_zip, createFolder, folderExist ,deleteTmpZip};
+module.exports = { opne_zip, createFolder, folderExist, deleteTmpZip };
