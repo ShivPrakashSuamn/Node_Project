@@ -8,18 +8,39 @@ const { deleteTmpZip } = require('../helper/common')
 
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
+    var limit = req.query.limit ? req.query.limit : 10; 
+    var search = req.query.search ? req.query.search : ''; 
+    var page = req.query.page ? req.query.page : 1; 
+    var order_by = req.query.order_by ? req.query.order_by : 'id'; 
+    var order_type = req.query.order_type ? req.query.order_type : 'desc'; 
+    var offset = 0;
+    let total = 0; 
+    if(limit){
+        offset = (page -1)*limit; 
+    }
     try {
-        let sql = "SELECT * FROM contact";
+        let sql1 = "SELECT * FROM contact where fname like '%"+search+"%' order by "+order_by+" "+order_type;
+        await connection.query(sql1, function (err, result1, fields) {
+            if (err) throw err;
+           
+            console.log('total row',result1)
+            total = result1.length
+        });
+        let sql = "SELECT * FROM contact where fname like '%"+search+"%' order by "+order_by+" "+order_type+" limit "+offset+","+limit;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Data Fatch SuccessFull';
-            resp.data = result;
-            console.log('data = ', resp);
+            resp.data = {
+                data:result,
+                total:total,
+                page:page
+            };
+            // console.log('data = ', resp);
             return res.json(resp);
         });
     } catch (e) {
-        console.log('Catch error', e);
+        // console.log('Catch error', e);
         return res.json(resp);
     }
 }
@@ -74,6 +95,7 @@ const CSVstore = async (req, res) => {    // CSVstore----------------------
         // }
     // CSV  ---- 
     if (req.file.filename) {
+        console.log('file----',req.file.filename);
         const fileName = config.BASEURL + '/uploads/tmp/' + req.file.filename;
 
         const fs = require("fs");
