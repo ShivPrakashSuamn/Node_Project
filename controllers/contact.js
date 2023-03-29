@@ -63,11 +63,18 @@ const store = async (req, res) => {    // store    ----------------------
         resp.message = schema.error.details[0].message;
         return res.json(resp);
     }
+    let fileUplad ='' ;
+    if(req.file == undefined){
+        fileUplad = null;
+        console.log('data---',req.file);
+    } else {
+        fileUplad = req.file.filename;
+    }
     try {
         const data = schema.value;
         // Insert ---
         let sql = "INSERT INTO contact (fname,lname,email,dob,phone,image,address,city,pin_code,status)" +
-            " VALUES ('" + data.fname + "','" +data.lname+ "','" +data.email+ "','" +data.dob+ "','" +data.phone+ "','" +req.file.filename+ "','" +data.address+ "','" +data.city + "','" + data.pincode + "',0)";
+            " VALUES ('" + data.fname + "','" +data.lname+ "','" +data.email+ "','" +data.dob+ "','" +data.phone+ "','" +fileUplad+ "','" +data.address+ "','" +data.city + "','" + data.pincode + "',0)";
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
@@ -156,9 +163,16 @@ const update = async (req, res) => {   // update   ----------------------
         resp.message = schema.error.details[0].message;
         return res.json(resp);
     }
+    let fileUplad ='' ;
+    if(req.file == undefined){
+        fileUplad = null;
+        console.log('data---',req.file);
+    } else {
+        fileUplad = req.file.filename;
+    }
     try {
         let sql = "update contact set fname='" + req.body.fname + "',lname='" + req.body.lname + "',email='" + req.body.email + "',dob='" + req.body.dob + "',phone='" + req.body.phone + "'," +
-            "image='" + req.file.filename + "',address='" + req.body.address + "',city='" + req.body.city + "',pin_code='" + req.body.pincode + "',status='" + req.body.status + "' where id = " + req.query.id;
+            "image='" + fileUplad + "',address='" + req.body.address + "',city='" + req.body.city + "',pin_code='" + req.body.pincode + "',status='" + req.body.status + "' where id = " + req.query.id;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
