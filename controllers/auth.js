@@ -1,6 +1,8 @@
 const connection = require('../helper/db');
 const bcrypt = require('bcryptjs');
 const Joi = require('joi');
+const jsonwebtoken = require("jsonwebtoken");
+const config = require('../config');
 
 const login = async (req, res) => {        // Login  -------------------------
     let resp = { status: false, message: 'Opps something went wrong', data: null };
@@ -8,16 +10,19 @@ const login = async (req, res) => {        // Login  -------------------------
     var salt = bcrypt.genSaltSync(10);
     var hash = bcrypt.hashSync(req.body.password, salt);
 
-    let sql = "select*from users where email ='" + req.body.email + "'";
+    let sql = "select * from users where email ='" + req.body.email + "'";
     await connection.query(sql, function (err, result, fields) {
         if (err) throw err;
         if (result.length > 0) {
             let data = JSON.parse(JSON.stringify(result))
             //companer password ----
             if (bcrypt.compareSync(req.body.password, data[0].password)) {
+
+                let token = jsonwebtoken.sign({ user: data[0] }, config.JWT_SECRET);
+
                 resp.status = true;
                 resp.message = 'Login Success';
-                resp.data = result;
+                resp.data = { users: result[0], token: token };
                 res.json(resp);
             } else {
                 resp.message = 'password not match';
@@ -26,6 +31,24 @@ const login = async (req, res) => {        // Login  -------------------------
         } else {
             resp.message = 'Email not found';
             res.json(resp);
+        }
+    });
+}
+
+const profile = async (req, res) => {        // Login  -------------------------
+    let resp = { status: false, message: 'Opps something went wrong', data: null };
+    let sql = "select * from users where id =" + req.user.id + "";
+    await connection.query(sql, function (err, result, fields) {
+        if (err) throw err;
+        if (result.length > 0) {
+            let data = JSON.parse(JSON.stringify(result))
+            resp.status = true;
+            resp.message = 'Data Fetch Success';
+            resp.data = data;
+            res.send(resp);
+        } else {
+            resp.message = 'Something went wrong';
+            res.send(resp);
         }
     });
 }
@@ -96,4 +119,4 @@ const resetpassword = (req, res) => {     // reset   ------------------------
 
 }
 
-module.exports = { login, register, forgotpassword, resetpassword };
+module.exports = { login, register, forgotpassword, resetpassword, profile };
