@@ -59,7 +59,7 @@ const register = async (req, res) => {     // register  ----------------------
     const schema = Joi.object({
         email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ["com", "net"] }, }),
         password: Joi.string().min(4).max(8).required(),
-        name: Joi.string().required()
+        fname: Joi.string().required()
     }).validate(req.body);
 
     if (schema.error) {
@@ -71,7 +71,7 @@ const register = async (req, res) => {     // register  ----------------------
     var salt = bcrypt.genSaltSync(10);
     var hash = bcrypt.hashSync(data.password, salt);
     // Insert ----    
-    let sql = "INSERT INTO users (name, email, password) VALUES ('" + data.name + "', '" + data.email + "', '" + hash + "')";
+    let sql = "INSERT INTO users (name, email, password) VALUES ('" + data.fname + "', '" + data.email + "', '" + hash + "')";
     await connection.query(sql, function (err, result, fields) {
         if (err) throw err;
         resp.status = true;
