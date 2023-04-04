@@ -36,7 +36,8 @@ const register = async (req, res) => {     // register  ----------------------
     const schema = Joi.object({
         email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ["com", "net"] }, }),
         password: Joi.string().min(4).max(8).required(),
-        fname: Joi.string().required()
+        fname: Joi.string().required(),
+        lname: Joi.string().required()
     }).validate(req.body);
 
     if (schema.error) {
