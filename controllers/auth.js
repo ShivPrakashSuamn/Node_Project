@@ -44,7 +44,7 @@ const profile = async (req, res) => {        // Login  -------------------------
             let data = JSON.parse(JSON.stringify(result))
             resp.status = true;
             resp.message = 'Data Fetch Success';
-            resp.data = data;
+            resp.data = data[0];
             res.send(resp);
         } else {
             resp.message = 'Something went wrong';

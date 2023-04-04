@@ -2,7 +2,10 @@ const jsonwebtoken = require("jsonwebtoken");
 const config = require('../config');
 
 const jwt = (req, res, next) => {
-    let allowURL = ['/auth/login', '/auth/register']
+    let allowURL = [
+        '/auth/login',
+        '/auth/register'
+    ];
     if (allowURL.includes(req.path)) {
         return next();
     } else {
