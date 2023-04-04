@@ -4,7 +4,8 @@ const connection = require('../helper/db');
 const csvtojson = require('csvtojson');
 const fs = require('fs');
 const csv = require('fast-csv');
-const { deleteTmpZip } = require('../helper/common')
+const { deleteTmpZip } = require('../helper/common');
+const path = require("path");
 
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
@@ -19,14 +20,16 @@ const index = async (req, res) => {     // index    ----------------------
         offset = (page -1)*limit; 
     }
     try {
-        let sql1 = "SELECT * FROM contact where fname like '%"+search+"%' order by "+order_by+" "+order_type;
+        let sql1 = "SELECT * FROM contact where fname LIKE '%"+search+"%' or lname LIKE '%"+search+"%'or email LIKE '%"+search+"%'or phone LIKE '%"+search+"%'\
+                    or address LIKE '%"+search+"%'or city LIKE '%"+search+"%'or pin_code LIKE '%"+search+"%' order by "+order_by+" "+order_type;
         await connection.query(sql1, function (err, result1, fields) {
             if (err) throw err;
            
-            console.log('total row',result1)
-            total = result1.length
+            // console.log('total row',result1)
+            total = result1.length;
         });
-        let sql = "SELECT * FROM contact where fname like '%"+search+"%' order by "+order_by+" "+order_type+" limit "+offset+","+limit;
+        let sql = "SELECT * FROM contact where fname LIKE '%"+search+"%' or lname LIKE '%"+search+"%'or email LIKE '%"+search+"%' or phone LIKE '%"+search+"%' \
+                    or address LIKE '%"+search+"%'or city LIKE '%"+search+"%'or pin_code LIKE '%"+search+"%'order by "+order_by+" "+order_type+" limit "+offset+","+limit;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
