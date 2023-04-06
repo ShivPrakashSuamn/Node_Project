@@ -12,10 +12,10 @@ const jwt = (req, res, next) => {
         let resp = { status: false, message: 'unauthorization request', data: null };
         let token = req.headers.authorization ? req.headers.authorization.split(" ")[1] : null;
         if (token) {
-            jsonwebtoken.verify(token, config.JWT_SECRET, (err, response) => {
+            jsonwebtoken.verify(token, config.JWT_SECRET,(err, response) => {
                 if (!err) {
                     req.user = response.user;
-                    next();
+                    next();    
                 } else {
                     res.json(resp);
                 }

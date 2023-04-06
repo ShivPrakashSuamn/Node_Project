@@ -7,14 +7,31 @@ const { opne_zip, createFolder, folderExist,deleteTmpZip } = require('../helper/
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
     var search = req.query.search ? req.query.search : ''; 
+    var limit = req.query.limit ? req.query.limit : '';
+    var page = req.query.page ? req.query.page : '';
+    var order_by = req.query.order_by ? req.query.order_by : 'id'; 
+    var order_type = req.query.order_type ? req.query.order_type : 'desc'; 
+    var offset = 0;
+    var total = 0; 
+    if(limit){
+        offset = (page -1)*limit; 
+    }
     try {
-        let sql = "SELECT * FROM template where title LIKE '%"+search+"%' ";
+        let sql1 = "SELECT * FROM template where title LIKE '%"+search+"%' order by "+order_by+" "+order_type;
+        await connection.query(sql1, function (err, result1, fields) {
+            if (err) throw err;
+            total = result1.length;
+        });
+
+        let sql = "SELECT * FROM template where title LIKE '%"+search+"%' order by "+order_by+" "+order_type+" limit "+offset+","+limit;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Data Fatch SuccessFull';
             resp.data = {
-                data:result
+                data:result,
+                page:page,
+                total:total
             };
             // console.log('data = ', resp);
             return res.json(resp);

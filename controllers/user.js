@@ -17,13 +17,13 @@ const index = async (req,res)=>{
         //         console.log('User count->', resultCount[0].countUser);
         //        // total = result1.length ;
         //     });
-        let sql1 ="SELECT * FROM users where name like '%"+search+"%'or email LIKE '%"+search+"%' order by "+order_by+" "+order_type;
+        let sql1 ="SELECT * FROM users where fname like '%"+search+"%'or lname LIKE '%"+search+"%'or email LIKE '%"+search+"%' order by "+order_by+" "+order_type;
             await connection.query(sql1, function(err, result1, fields){
                 if(err) throw err ;
                 total = result1.length ;
                 console.log('total Row->', total);
             });
-        let sql = "SELECT * FROM users where name like '%"+search+"%'or email LIKE '%"+search+"%' order by "+order_by+" "+order_type+" limit "+offset+","+limit;
+        let sql = "SELECT * FROM users where fname like '%"+search+"%'or lname LIKE '%"+search+"%'or email LIKE '%"+search+"%' order by "+order_by+" "+order_type+" limit "+offset+","+limit;
         await connection.query(sql, function(err, result, fields){
             if(err) throw err ;
             resp.status = true;

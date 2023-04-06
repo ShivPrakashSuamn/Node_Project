@@ -3,7 +3,7 @@ const authController = require('../controllers/auth');
 const app = Router();
 
 app.post('/login', authController.login);
-app.get('/profile', authController.profile);
+app.post('/profile', authController.profile);
 app.post('/register', authController.register);
 app.get('/forgot', authController.forgotpassword);
 app.get('/reset', authController.resetpassword);
