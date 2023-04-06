@@ -17,9 +17,9 @@ const login = async (req, res) => {        // Login  -------------------------
             let data = JSON.parse(JSON.stringify(result))
             //companer password ------------
             if (bcrypt.compareSync(req.body.password, data[0].password)) {
-                
-                let token = jsonwebtoken.sign({ user: data[0] }, config.JWT_SECRET);
-                
+
+                let token = jsonwebtoken.sign({ user: data[0] }, config.JWT_SECRET, { expiresIn: '1h' });
+
                 resp.status = true;
                 resp.message = 'Login Success';
                 resp.data = { users: result[0], token: token };
@@ -51,7 +51,7 @@ const profile = async (req, res) => {        // Login  -------------------------
         } else {
             resp.message = 'Something went wrong';
             res.send(resp);
-        }authorization
+        }
     });
 }
 
