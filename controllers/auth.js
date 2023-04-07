@@ -36,7 +36,7 @@ const login = async (req, res) => {        // Login  -------------------------
     });
 }
 
-const profile = async (req, res) => {        // Login  -------------------------
+const profile = async (req, res) => {      // profile ------------------------
     let resp = { status: false, message: 'Opps something went wrong', data: null };
     let sql = "select * from users where id =" + req.user.id + "";
     console.log('dad->', req.user.id);

@@ -4,6 +4,7 @@ const express = require("express");
 const path = require('path');
 const bodyparser = require('body-parser');
 const authRouter = require('./routes/auth');
+const listRouter = require('./routes/list');
 const contactRouter = require('./routes/contact');
 const dashboardRouter = require('./routes/dashboard');
 const templateRouter = require('./routes/template');
@@ -19,6 +20,7 @@ app.use(cors())
 app.use(bodyparser.urlencoded({ extended: true }));
 app.use(bodyparser.json())
 app.use('/auth', authRouter);
+app.use('/list', listRouter);
 app.use('/contact', contactRouter);
 app.use('/dashboard', dashboardRouter);
 app.use('/template', templateRouter);
