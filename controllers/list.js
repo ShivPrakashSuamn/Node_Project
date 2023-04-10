@@ -9,35 +9,35 @@ const path = require("path");
 
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
-    var limit = req.query.limit ? req.query.limit : 10; 
-    var search = req.query.search ? req.query.search : ''; 
-    var page = req.query.page ? req.query.page : 1; 
-    var order_by = req.query.order_by ? req.query.order_by : 'id'; 
-    var order_type = req.query.order_type ? req.query.order_type : 'desc'; 
+    var limit = req.query.limit ? req.query.limit : 10;
+    var search = req.query.search ? req.query.search : '';
+    var page = req.query.page ? req.query.page : 1;
+    var order_by = req.query.order_by ? req.query.order_by : 'id';
+    var order_type = req.query.order_type ? req.query.order_type : 'desc';
     var offset = 0;
-    let total = 0; 
-    if(limit){
-        offset = (page -1)*limit; 
+    let total = 0;
+    if (limit) {
+        offset = (page - 1) * limit;
     }
     try {
-        let sql1 = "SELECT * FROM list where title LIKE '%"+search+"%' or id LIKE '%"+search+"%' order by "+order_by+" "+order_type;
+        let sql1 = "SELECT * FROM list where title LIKE '%" + search + "%' or total_contacts LIKE '%" + search + "%' order by " + order_by + " " + order_type;
         await connection.query(sql1, function (err, result1, fields) {
             if (err) throw err;
-           
-             //console.log('total row',result1)
+
+            //console.log('total row',result1)
             total = result1.length;
         });
-        let sql = "SELECT * FROM list where title LIKE '%"+search+"%' or id LIKE '%"+search+"%' order by "+order_by+" "+order_type+" limit "+offset+","+limit;
+        let sql = "SELECT * FROM list where title LIKE '%" + search + "%' or total_contacts LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Data Fatch SuccessFull';
             resp.data = {
-                data:result,
-                total:total,
-                page:page
+                data: result,
+                total: total,
+                page: page
             };
-             console.log('data = ', resp);
+            console.log('data = ', resp);
             return res.json(resp);
         });
     } catch (e) {
@@ -51,7 +51,7 @@ const store = async (req, res) => {    // store    ----------------------
     // Validation ----
     const schema = Joi.object({
         title: Joi.string().required(),
-        contact_id: Joi.string().required()
+        contacts: Joi.array().required()
     }).validate(req.body);
 
     if (schema.error) {
@@ -62,15 +62,21 @@ const store = async (req, res) => {    // store    ----------------------
     const data = schema.value;
     // Insert ---
     try {
-    let sql = "INSERT INTO list (title,contact_id) VALUES ('" + data.title + "','" +data.contact_id+ "')";
-    await connection.query(sql, function (err, result, fields) {
-        if (err) throw err;
-        resp.status = true;
-        resp.message = 'Data store SuccessFull!';
-        resp.data = result;
-        console.log('resp-', resp);
-        return res.json(resp);
-    });
+        let sql = "INSERT INTO list (title,total_contacts) VALUES ('" + data.title + "','" + data.contacts.length + "')";
+        await connection.query(sql, function (err, result, fields) {
+            if (err) throw err;
+            resp.status = true;
+            resp.message = 'Data store SuccessFull!';
+            resp.data = result;
+            console.log('resp-', result.insertId);
+            data.contacts.map(async (i) => {
+                let sql1 = "INSERT INTO list_contacts (list_id,contact_id) VALUES (" + result.insertId + "," + i + ")";
+                await connection.query(sql1, function (err, result, fields) {
+                    if (err) throw err;
+                })
+            })
+            return res.json(resp);
+        });
     } catch (e) {
         console.log('catch error ', e)
         return res.json(resp);
@@ -80,17 +86,17 @@ const store = async (req, res) => {    // store    ----------------------
 const CSVstore = async (req, res) => {    // CSVstore----------------------
     let resp = { status: false, message: 'Oops something went wrong', data: null };
     // Validation ----
-        // const schema = Joi.object({
-        //     csvfile: Joi.string().required(),
-        // }).validate(req.file);
+    // const schema = Joi.object({
+    //     csvfile: Joi.string().required(),
+    // }).validate(req.file);
 
-        // if (schema.error) {
-        //     resp.message = schema.error.details[0].message;
-        //     return res.json(resp);
-        // }
+    // if (schema.error) {
+    //     resp.message = schema.error.details[0].message;
+    //     return res.json(resp);
+    // }
     // CSV  ---- 
     if (req.file.filename) {
-        console.log('file----',req.file.filename);
+        console.log('file----', req.file.filename);
         const fileName = config.BASEURL + '/uploads/tmp/' + req.file.filename;
 
         const fs = require("fs");
@@ -152,13 +158,25 @@ const update = async (req, res) => {   // update   ----------------------
         return res.json(resp);
     }
     try {
-        let sql = "update list set title='" + req.body.title + "',contact_id='" + req.body.contact_id + "' where id = " + req.query.id;
+
+        let sql = "update list set title='" + req.body.title + "',total_contacts='" + req.body.contacts.length + "' where id = " + req.query.id;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Data Update SuccessFull!';
             resp.data = result;
-            console.log('resp-', resp);
+            console.log('resp-', resp.data);
+
+            let sql1 = "delete from list_contacts where list_id =" + req.query.id;  // delete data --
+            connection.query(sql1, function (err, result1, fields) {
+                if (err) throw err;           
+            })
+            req.body.contacts.map(async (i) => {
+                let sql2 = "INSERT INTO list_contacts (list_id,contact_id) VALUES (" + req.query.id + "," + i + ")";
+                await connection.query(sql2, function (err, result2, fields) {
+                    if (err) throw err;
+                })
+            })
             return res.json(resp);
         });
     } catch (e) {
@@ -198,6 +216,7 @@ const deleteRow = async (req, res) => {// delete   ----------------------
 const show = async (req, res) => {     // show     ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
     // validaation --
+    let checkboxData = [];
     const schema = Joi.object({
         id: Joi.string().required()
     }).validate(req.query);
@@ -206,12 +225,20 @@ const show = async (req, res) => {     // show     ----------------------
         return res.json(resp);
     }
     try {
+        let sql1 = "SELECT * FROM list_contacts where list_id =" + req.query.id;
+        connection.query(sql1, function (err, result1, fields) {
+            if (err) throw err;
+            checkboxData = result1;
+        })
         let sql = "SELECT * FROM list where id =" + req.query.id;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Row Data Fatch';
-            resp.data = result;
+            resp.data = {
+                data: result,
+                checkbox: checkboxData
+            }
             return res.json(resp);
         });
     } catch (e) {
