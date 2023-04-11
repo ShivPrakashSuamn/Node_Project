@@ -4,8 +4,9 @@ const connection = require('../helper/db');
 const csvtojson = require('csvtojson');
 const fs = require('fs');
 const csv = require('fast-csv');
-const { deleteTmpZip } = require('../helper/common');
 const path = require("path");
+const { deleteTmpZip } = require('../helper/common');
+const { error } = require('console');
 
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
@@ -83,32 +84,33 @@ const store = async (req, res) => {    // store    ----------------------
     }
 }
 
-const CSVstore = async (req, res) => {    // CSVstore----------------------
+const CSVstore = async (req, res) => {  // CSVstore----------------------
     let resp = { status: false, message: 'Oops something went wrong', data: null };
-    // Validation ----
-    // const schema = Joi.object({
-    //     csvfile: Joi.string().required(),
-    // }).validate(req.file);
+    const schema = Joi.object({
+        title: Joi.string().required(),
+    }).validate(req.body);
 
-    // if (schema.error) {
-    //     resp.message = schema.error.details[0].message;
-    //     return res.json(resp);
-    // }
+    if (schema.error) {
+        resp.message = schema.error.details[0].message;
+        return res.json(resp);
+    }
+    const titledata = schema.value;
     // CSV  ---- 
-    if (req.file.filename) {
-        console.log('file----', req.file.filename);
-        const fileName = config.BASEURL + '/uploads/tmp/' + req.file.filename;
+    console.log('title --', titledata.title);
 
+    if (req.file.filename) {
+        const fileName = config.BASEURL + '/uploads/tmp/' + req.file.filename;
         const fs = require("fs");
         const readline = require("readline");
         const stream = fs.createReadStream(fileName);
         const rl = readline.createInterface({ input: stream });
         let data = [];
+        let ckackEmail = '';
         rl.on("line", (row) => {
             data.push(row.split(","));
         });
         rl.on("close", () => {
-            // console.log(data);
+            console.log('=='.data);
         });
         fs.createReadStream(fileName)
             .pipe(csv.parse({ headers: true }))
@@ -124,19 +126,48 @@ const CSVstore = async (req, res) => {    // CSVstore----------------------
                     dob = source[i]["dob"],
                     phone = source[i]["phone"],
                     address = source[i]["address"],
-                    city = source[i]["City"],
+                    city = source[i]["city"],
                     pincode = source[i]["pin_code"],
                     status = source[i]["status"]
 
-                let sql = "INSERT INTO contact (fname,lname,email,dob,phone,image,address,city,pin_code,status)" +
-                    " VALUES ('" + fname + "','" + lname + "','" + email + "','" + dob + "','" + phone + "','" + null + "','" + address + "','" + city + "','" + pincode + "','" + status + "')";
-                connection.query(sql, (err, results, fields) => {
-                    if (err) {
-                        console.log("Unable to insert item at row ", i + 1);
-                        return console.log(err);
-                    }
+                let sql1 = "SELECT id FROM `contact` WHERE email ='" + email + "'";
+                connection.query(sql1, async (err, result1, fields) => {
+                    if (err) throw err;
+                    ckackEmail = result1;
+                    console.log('data==>', result1.length);
                 });
+                if (ckackEmail.length == 0) {
+                    let sql2 = "UPDATE contact SET fname= '" + fname + "', lname= '" + lname + "', dob='" + dob + "', phone='" + phone + "', image='null', address='" + address + "', city='" + city + "'," +
+                        "pin_code='" + pincode + "', status='" + status + "' WHERE email ='" + email + "'";
+                    connection.query(sql2, (err, result2, fields) => {
+                        if (err) throw err;
+                        console.log('update')
+                    });
+                } else {
+                    let sql3 = "INSERT INTO contact (fname,lname,email,dob,phone,image,address,city,pin_code,status)" +
+                        " VALUES ('" + fname + "','" + lname + "','" + email + "','" + dob + "','" + phone + "','" + null + "','" + address + "','" + city + "','" + pincode + "','" + status + "')";
+                    connection.query(sql3, (err, result3, fields) => {
+                        if (err) throw err;
+                        console.log('insert')
+                    });
+                }
             }
+            let sql4 = "INSERT INTO list (title,total_contacts) VALUES ('" + titledata.title + "','" +source.length+"')";
+            connection.query(sql4, async (err, result4, fields) =>{
+                if (err) throw err; 
+                // await source.map(async (i) => {
+                //     let sql5 = "INSERT INTO list_contacts (list_id,contact_id) VALUES (" + result4.insertId + "," + i + ")";
+                //     await connection.query(sql5, function (err, result5, fields) {
+                //         if (err) throw err;
+                //     })
+                // })
+                // resp.status = true;
+                // resp.message = 'CSV Data store SuccessFull!!';
+                // resp.data = result4;
+                // console.log('resp-', result4.insertId);
+
+                // return res.json(resp);
+            }); 
             console.log("All CSV items stored into database successfully ");
         });
         await deleteTmpZip(fileName);  // delete tmp file
@@ -160,16 +191,15 @@ const update = async (req, res) => {   // update   ----------------------
     try {
 
         let sql = "update list set title='" + req.body.title + "',total_contacts='" + req.body.contacts.length + "' where id = " + req.query.id;
-        await connection.query(sql, function (err, result, fields) {
+        await connection.query(sql, async (err, result, fields) => {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Data Update SuccessFull!';
             resp.data = result;
-            console.log('resp-', resp.data);
 
             let sql1 = "delete from list_contacts where list_id =" + req.query.id;  // delete data --
-            connection.query(sql1, function (err, result1, fields) {
-                if (err) throw err;           
+            await connection.query(sql1, function (err, result1, fields) {
+                if (err) throw err;
             })
             req.body.contacts.map(async (i) => {
                 let sql2 = "INSERT INTO list_contacts (list_id,contact_id) VALUES (" + req.query.id + "," + i + ")";
@@ -199,11 +229,15 @@ const deleteRow = async (req, res) => {// delete   ----------------------
     }
     try {
         let sql = "DELETE FROM list where id = " + req.query.id;
-        await connection.query(sql, function (err, result, fields) {
+        await connection.query(sql, async (err, result, fields) => {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Row Delete SuccessFull!';
             resp.data = result;
+            let sql1 = "delete from list_contacts where list_id =" + req.query.id;  // delete data --
+            await connection.query(sql1, function (err, result1, fields) {
+                if (err) throw err;
+            })
             console.log('resp-', resp);
             return res.json(resp);
         });

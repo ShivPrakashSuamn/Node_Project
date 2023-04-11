@@ -6,7 +6,7 @@ const app = Router();
 
 app.get('/', listController.index);
 app.post('/store', listController.store);
-app.post('/csv', listController.CSVstore);
+app.post('/csv',fileUpload, listController.CSVstore);
 app.post('/update', listController.update);
 app.get('/delete', listController.deleteRow);
 app.get('/show', listController.show);
