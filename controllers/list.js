@@ -95,85 +95,103 @@ const CSVstore = async (req, res) => {  // CSVstore----------------------
         return res.json(resp);
     }
     const titledata = schema.value;
-    // CSV  ---- 
-    console.log('title --', titledata.title);
+    try {
+        let sql = "INSERT INTO list (title,total_contacts) VALUES ('" + titledata.title + "','')";
+        await connection.query(sql, async (err, result, fields) => {
+            if (err) throw err;
+            let correntId  =  result.insertId;
+            let arr = [];
 
-    if (req.file.filename) {
-        const fileName = config.BASEURL + '/uploads/tmp/' + req.file.filename;
-        const fs = require("fs");
-        const readline = require("readline");
-        const stream = fs.createReadStream(fileName);
-        const rl = readline.createInterface({ input: stream });
-        let data = [];
-        let ckackEmail = '';
-        rl.on("line", (row) => {
-            data.push(row.split(","));
-        });
-        rl.on("close", () => {
-            console.log('=='.data);
-        });
-        fs.createReadStream(fileName)
-            .pipe(csv.parse({ headers: true }))
-            .on('error', error => console.error(error))
-            .on('data', row => data.push(row))
-            .on('end', () => console.log(data));
+            // CSV  ---- 
+            if (req.file.filename) {
+                console.log('title --', req.file.filename);
+                const fileName = config.BASEURL + '/uploads/tmp/' + req.file.filename;
+                const fs = require("fs");
+                const readline = require("readline");
+                const stream = fs.createReadStream(fileName);
+                const rl = readline.createInterface({ input: stream });
+                let data = [];
+                let ckackEmail = '';
+                rl.on("line", (row) => {
+                    data.push(row.split(","));
+                });
+                rl.on("close", () => {
+                    //console.log('=='.data);
+                });
+                fs.createReadStream(fileName)
+                    .pipe(csv.parse({ headers: true }))
+                    .on('error', error => console.error(error))
+                    .on('data', row => data.push(row))
+                    .on('end', () => console.log(data));
 
-        await csvtojson().fromFile(fileName).then(source => {
-            for (var i = 0; i < source.length; i++) {
-                var fname = source[i]["fname"],
-                    lname = source[i]["lname"],
-                    email = source[i]["email"],
-                    dob = source[i]["dob"],
-                    phone = source[i]["phone"],
-                    address = source[i]["address"],
-                    city = source[i]["city"],
-                    pincode = source[i]["pin_code"],
-                    status = source[i]["status"]
+                await csvtojson().fromFile(fileName).then(source => {
+
+                    loopCSV(source);  // loop handling function ---
+
+                    console.log('idloop', source)
+                    let sql4 = "UPDATE `list` SET `total_contacts` = '"+source.length+"' WHERE `id` = '"+correntId+"'";
+                    connection.query(sql4, async (err, result4, fields) =>{
+                        if (err) throw err; 
+                    //     await source.map(async (i) => {
+                    //         let sql5 = "INSERT INTO list_contacts (list_id,contact_id) VALUES (" + result4.insertId + "," + i + ")";
+                    //         await connection.query(sql5, function (err, result5, fields) {
+                    //             if (err) throw err;
+                    //         })
+                    //     })
+                    }); 
+                    console.log("All CSV items stored into database successfully ");
+                });
+                await deleteTmpZip(fileName);  // delete tmp file
+                resp.status = true;
+                resp.message = 'CSV Data store SuccessFull!';
+                return res.json(resp);
+            }
+        });
+    } catch (e) {
+        console.log('catch error', e);
+        return res.json(resp);
+    }
+    
+    function loopCSV(data) {
+        return new Promise((resolve, reject) => {
+            let arr = [];
+            for (var i = 0; i < data.length; i++) {
+                // resolve(arr);
+                var fname = data[i]["fname"],
+                    lname = data[i]["lname"],
+                    email = data[i]["email"],
+                    dob = data[i]["dob"],
+                    phone = data[i]["phone"],
+                    address = data[i]["address"],
+                    city = data[i]["city"],
+                    pincode = data[i]["pin_code"],
+                    status = data[i]["status"]
 
                 let sql1 = "SELECT id FROM `contact` WHERE email ='" + email + "'";
-                connection.query(sql1, async (err, result1, fields) => {
+                resolve(connection.query(sql1, async (err, result1, fields) => {
                     if (err) throw err;
                     ckackEmail = result1;
-                    console.log('data==>', result1.length);
-                });
-                if (ckackEmail.length == 0) {
+                }));
+                if (ckackEmail.length > 0) {
                     let sql2 = "UPDATE contact SET fname= '" + fname + "', lname= '" + lname + "', dob='" + dob + "', phone='" + phone + "', image='null', address='" + address + "', city='" + city + "'," +
                         "pin_code='" + pincode + "', status='" + status + "' WHERE email ='" + email + "'";
-                    connection.query(sql2, (err, result2, fields) => {
+                    resolve(connection.query(sql2, (err, result2, fields) => {
                         if (err) throw err;
-                        console.log('update')
-                    });
+                        console.log('update');
+                        arr.push(result2.insertId);             
+                        })
+                    );
                 } else {
                     let sql3 = "INSERT INTO contact (fname,lname,email,dob,phone,image,address,city,pin_code,status)" +
                         " VALUES ('" + fname + "','" + lname + "','" + email + "','" + dob + "','" + phone + "','" + null + "','" + address + "','" + city + "','" + pincode + "','" + status + "')";
-                    connection.query(sql3, (err, result3, fields) => {
+                    resolve(connection.query(sql3, (err, result3, fields) => {
                         if (err) throw err;
-                        console.log('insert')
-                    });
+                        arr.push(result3.insertId);    
+                        })
+                    );
                 }
-            }
-            let sql4 = "INSERT INTO list (title,total_contacts) VALUES ('" + titledata.title + "','" +source.length+"')";
-            connection.query(sql4, async (err, result4, fields) =>{
-                if (err) throw err; 
-                // await source.map(async (i) => {
-                //     let sql5 = "INSERT INTO list_contacts (list_id,contact_id) VALUES (" + result4.insertId + "," + i + ")";
-                //     await connection.query(sql5, function (err, result5, fields) {
-                //         if (err) throw err;
-                //     })
-                // })
-                // resp.status = true;
-                // resp.message = 'CSV Data store SuccessFull!!';
-                // resp.data = result4;
-                // console.log('resp-', result4.insertId);
-
-                // return res.json(resp);
-            }); 
-            console.log("All CSV items stored into database successfully ");
-        });
-        await deleteTmpZip(fileName);  // delete tmp file
-        resp.status = true;
-        resp.message = 'CSV Data store SuccessFull!';
-        return res.json(resp);
+            } console.log('insert push data=',arr);
+        })
     }
 }
 
