@@ -6,7 +6,7 @@ const fs = require('fs');
 const csv = require('fast-csv');
 const path = require("path");
 const { deleteTmpZip } = require('../helper/common');
-const { error } = require('console');
+const { format } = require('../helper/common')
 
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
@@ -84,7 +84,7 @@ const store = async (req, res) => {    // store    ----------------------
     }
 }
 
-const CSVstore = async (req, res) => {  // CSVstore----------------------
+const CSVstore1 = async (req, res) => {  // CSVstore----------------------
     let resp = { status: false, message: 'Oops something went wrong', data: null };
     const schema = Joi.object({
         title: Joi.string().required(),
@@ -201,6 +201,85 @@ const CSVstore = async (req, res) => {  // CSVstore----------------------
         console.log('catch error', e);
         return res.json(resp);
     }
+}
+const CSVstore = async (req, res) => {  // CSVstore----------------------
+    let resp = { status: false, message: 'Oops something went wrong', data: null };
+    const schema = Joi.object({
+        title: Joi.string().required(),
+    }).validate(req.body);
+
+    if (schema.error) {
+        resp.message = schema.error.details[0].message;
+        return res.json(resp);
+    }
+    const titledata = schema.value;
+    try {
+        let sql = "INSERT INTO list (title,total_contacts) VALUES ('" + titledata.title + "','0')";
+        await connection.query(sql, async (err, result, fields) => {
+            if (err) throw err;
+            let listId = result.insertId;
+            // CSV  ---- 
+            if (req.file.filename) {
+                const fileName = config.BASEURL + '/uploads/tmp/' + req.file.filename;
+                const csvData = await csvtojson().fromFile(fileName);
+                await insertContacts(csvData, listId);
+                await deleteTmpZip(fileName);  // delete tmp file
+            }
+            resp.status = true;
+            resp.message = 'CSV Data store SuccessFull!';
+            return res.json(resp);
+        });
+    } catch (e) {
+        console.log('catch error', e);
+        return res.json(resp);
+    }
+}
+const insertContacts = async (csvData, listId) => {
+    return new Promise(async (resolve, reject) => {
+        let flag = 0;
+        await csvData.map(async (item, i) => {
+            let sql1 = "SELECT id FROM `contact` WHERE email ='" + item.email + "'";
+            await connection.query(sql1, async (err, result1, fields) => {
+                if (err) throw err;
+                if (result1.length > 0) {
+                    let sql2 = "UPDATE contact SET fname= '" + item.fname + "', lname= '" + item.lname + "', dob = '" + format(new Date(item.dob)) + "', phone='" + item.phone + "', image='null', address='" + item.address + "', city='" + item.city + "'," +
+                        "pin_code='" + item.pin_code + "', status='" + item.status + "' WHERE email ='" + item.email + "'";
+                    await connection.query(sql2, async (err, result2, fields) => {
+                        if (err) throw err;
+                        if (result2) {
+                            await insertListContact(listId, result2.insertId);
+                        }
+                    });
+                } else {
+                    let sql3 = "INSERT INTO contact (fname,lname,email,dob,phone,image,address,city,pin_code,status)" +
+                        "VALUES ('" + item.fname + "','" + item.lname + "','" + item.email + "','" + format(new Date(item.dob)) + "','" + item.phone + "','" + null + "','" + item.address + "','" + item.city + "','" + item.pincode + "','" + item.status + "')";
+                    await connection.query(sql3, async (err, result3, fields) => {
+                        if (err) throw err;
+                        if (result3) {
+                            await insertListContact(listId, result3.insertId);
+                        }
+                    });
+                }
+            });
+            if (i == flag) {
+                resolve(true);
+            }
+            flag++;
+        })
+    })
+}
+const insertListContact = async (listid, contactId) => {
+    return new Promise(async (resolve, reject) => {
+        let sql1 = "INSERT INTO list_contacts (list_id,contact_id) VALUES (" + listid + "," + contactId + ")";
+        await connection.query(sql1, function (err, result, fields) {
+            if (err) throw err;
+            if (result) {
+                resolve(true);
+            } else {
+                reject(false);
+            }
+        })
+    })
 }
 
 const update = async (req, res) => {   // update   ----------------------
