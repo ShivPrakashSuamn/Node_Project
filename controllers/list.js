@@ -141,42 +141,36 @@ const CSVstore1 = async (req, res) => {  // CSVstore----------------------
                                 var pincode = data[i]["pin_code"];
                                 var status = data[i]["status"];
 
-                                await userEmail(email);
+                                let sql1 = "SELECT id FROM `contact` WHERE email ='" + email + "'";
+                                await connection.query(sql1, async (err, result1, fields) => {
+                                    if (err) throw err;
+                                    await setTimeout(() => {
+                                        resolve(chackEmail = result1);
+                                    }, 500);
 
-                                function userEmail(emailData) {
-                                    return new Promise(async (resolve, reject) => {
-                                        let sql1 = "SELECT id FROM `contact` WHERE email ='" + emailData + "'";
-                                        await connection.query(sql1, (err, result1, fields) => {
-                                            if (err) throw err;
-                                            setTimeout(() => {
-                                                resolve(chackEmail = result1);
-                                            }, 500);
-                                        });
-                                    })
-                                }
-
-                                if (chackEmail.length > 0) {
-                                    let sql2 = "UPDATE contact SET fname= '" + fname + "', lname= '" + lname + "', dob='" + dob + "', phone='" + phone + "', image='null', address='" + address + "', city='" + city + "'," +
-                                        "pin_code='" + pincode + "', status='" + status + "' WHERE email ='" + email + "'";
-                                    await connection.query(sql2, (err, result2, fields) => {
-                                        if (err) throw err;
+                                    console.log('idloop--', chackEmail)
+                                    if (chackEmail.length > 0) {
+                                        // let sql2 = "UPDATE contact SET fname= '" + fname + "', lname= '" + lname + "', dob='" + dob + "', phone='" + phone + "', image='null', address='" + address + "', city='" + city + "'," +
+                                        //     "pin_code='" + pincode + "', status='" + status + "' WHERE email ='" + email + "'";
+                                        // await connection.query(sql2, (err, result2, fields) => {
+                                        //     if (err) throw err;
                                         console.log('update data', fname);
-                                        ids.push(result2.insertId);
-                                    });
-                                } else {
-                                    let sql3 = "INSERT INTO contact (fname,lname,email,dob,phone,image,address,city,pin_code,status)" +
-                                        "VALUES ('" + fname + "','" + lname + "','" + email + "','" + dob + "','" + phone + "','" + null + "','" + address + "','" + city + "','" + pincode + "','" + status + "')";
-                                    await connection.query(sql3, (err, result3, fields) => {
-                                        if (err) throw err;
+                                        //     ids.push(result2.insertId);
+                                        // });
+                                    } else {
+                                        // let sql3 = "INSERT INTO contact (fname,lname,email,dob,phone,image,address,city,pin_code,status)" +
+                                        //     "VALUES ('" + fname + "','" + lname + "','" + email + "','" + dob + "','" + phone + "','" + null + "','" + address + "','" + city + "','" + pincode + "','" + status + "')";
+                                        // await connection.query(sql3, (err, result3, fields) => {
+                                        //     if (err) throw err;
                                         console.log('insert', fname);
-                                        ids.push(result3.insertId);
-                                    });
-                                }
+                                        //     ids.push(result3.insertId);
+                                        // });
+                                    }
+                                });
                             }
                         });
                     }
-
-                    await console.log('insert push data=', ids);
+                    console.log('insert push data=', ids);
                     console.log('idloop', source)
                     let sql4 = "UPDATE `list` SET `total_contacts` = '" + source.length + "' WHERE `id` = '" + correntId + "'";
                     await connection.query(sql4, async (err, result4, fields) => {
@@ -190,11 +184,11 @@ const CSVstore1 = async (req, res) => {  // CSVstore----------------------
                     });
                     console.log("All CSV items stored into database successfully ");
                 });
+                await deleteTmpZip(fileName);  // delete tmp file
+                resp.status = true;
+                resp.message = 'CSV Data store SuccessFull!';
+                return res.json(resp);
             }
-            await deleteTmpZip(fileName);  // delete tmp file
-            resp.status = true;
-            resp.message = 'CSV Data store SuccessFull!';
-            return res.json(resp);
         });
     } catch (e) {
         console.log('catch error', e);
