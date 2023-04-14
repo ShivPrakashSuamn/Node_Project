@@ -38,7 +38,6 @@ const index = async (req, res) => {     // index    ----------------------
                 total: total,
                 page: page
             };
-            console.log('data = ', resp);
             return res.json(resp);
         });
     } catch (e) {
@@ -202,6 +201,7 @@ const CSVstore1 = async (req, res) => {  // CSVstore----------------------
         return res.json(resp);
     }
 }
+
 const CSVstore = async (req, res) => {  // CSVstore----------------------
     let resp = { status: false, message: 'Oops something went wrong', data: null };
     const schema = Joi.object({
@@ -223,6 +223,7 @@ const CSVstore = async (req, res) => {  // CSVstore----------------------
                 const fileName = config.BASEURL + '/uploads/tmp/' + req.file.filename;
                 const csvData = await csvtojson().fromFile(fileName);
                 await insertContacts(csvData, listId);
+                await updateList(csvData.length, listId); // list total_contacts update 
                 await deleteTmpZip(fileName);  // delete tmp file
             }
             resp.status = true;
@@ -234,7 +235,7 @@ const CSVstore = async (req, res) => {  // CSVstore----------------------
         return res.json(resp);
     }
 }
-const insertContacts = async (csvData, listId) => {
+const insertContacts = async (csvData, listId) => { // csv function  -----
     return new Promise(async (resolve, reject) => {
         let flag = 0;
         await csvData.map(async (item, i) => {
@@ -247,7 +248,7 @@ const insertContacts = async (csvData, listId) => {
                     await connection.query(sql2, async (err, result2, fields) => {
                         if (err) throw err;
                         if (result2) {
-                            await insertListContact(listId, result2.insertId);
+                            await insertListContact(listId, result1[0].id);
                         }
                     });
                 } else {
@@ -265,10 +266,10 @@ const insertContacts = async (csvData, listId) => {
                 resolve(true);
             }
             flag++;
-        })
-    })
+        });
+    });
 }
-const insertListContact = async (listid, contactId) => {
+const insertListContact = async (listid, contactId) => {// csv function --
     return new Promise(async (resolve, reject) => {
         let sql1 = "INSERT INTO list_contacts (list_id,contact_id) VALUES (" + listid + "," + contactId + ")";
         await connection.query(sql1, function (err, result, fields) {
@@ -278,8 +279,21 @@ const insertListContact = async (listid, contactId) => {
             } else {
                 reject(false);
             }
-        })
-    })
+        });
+    });
+}
+const updateList = async (totalCount, correntId) => { // csv function  ----
+    return new Promise(async(resolve, reject) => {
+        let sql = "UPDATE `list` SET `total_contacts` = '" + totalCount+ "' WHERE `id` = '" + correntId + "'";
+        await connection.query(sql, function(err, result, fields){
+           if (err) throw err;
+           if(result) {
+            resolve(true);
+           } else {
+            resolve(false);
+           }
+        });
+    });
 }
 
 const update = async (req, res) => {   // update   ----------------------
@@ -294,7 +308,6 @@ const update = async (req, res) => {   // update   ----------------------
         return res.json(resp);
     }
     try {
-
         let sql = "update list set title='" + req.body.title + "',total_contacts='" + req.body.contacts.length + "' where id = " + req.query.id;
         await connection.query(sql, async (err, result, fields) => {
             if (err) throw err;
@@ -306,7 +319,7 @@ const update = async (req, res) => {   // update   ----------------------
             await connection.query(sql1, function (err, result1, fields) {
                 if (err) throw err;
             })
-            req.body.contacts.map(async (i) => {
+            await req.body.contacts.map(async (i) => {
                 let sql2 = "INSERT INTO list_contacts (list_id,contact_id) VALUES (" + req.query.id + "," + i + ")";
                 await connection.query(sql2, function (err, result2, fields) {
                     if (err) throw err;
@@ -343,7 +356,6 @@ const deleteRow = async (req, res) => {// delete   ----------------------
             await connection.query(sql1, function (err, result1, fields) {
                 if (err) throw err;
             })
-            console.log('resp-', resp);
             return res.json(resp);
         });
     } catch (e) {
