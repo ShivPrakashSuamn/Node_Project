@@ -133,7 +133,7 @@ const CSVstore = async (req, res) => {  // CSVstore  ----------------------
                     dob = source[i]["dob"],
                     phone = source[i]["phone"],
                     address = source[i]["address"],
-                    city = source[i]["City"],
+                    city = source[i]["city"],
                     pincode = source[i]["pin_code"],
                     status = source[i]["status"]
 
@@ -174,8 +174,8 @@ const update = async (req, res) => {   // update   ----------------------
         fileUplad = req.file.filename;
     }
     try {
-        let sql = "update contact set fname='" + req.body.fname + "',lname='" + req.body.lname + "',email='" + req.body.email + "',dob='" + req.body.dob + "',phone='" + req.body.phone + "'," +
-            "image='" + fileUplad + "',address='" + req.body.address + "',city='" + req.body.city + "',pin_code='" + req.body.pincode + "',status='" + req.body.status + "' where id = " + req.query.id;
+        let sql = "update contact set fname='"+ req.body.fname +"',lname='"+ req.body.lname +"',email='"+ req.body.email +"',dob='"+ req.body.dob +"',phone='"+ req.body.phone +"'," +
+            "image='"+ fileUplad +"',address='"+ req.body.address +"',city='"+ req.body.city +"',pin_code='"+ req.body.pincode +"',status='"+ req.body.status +"' where id = " + req.query.id;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
@@ -209,7 +209,7 @@ const deleteRow = async (req, res) => {// delete   ----------------------
             resp.status = true;
             resp.message = 'Row Delete SuccessFull!';
             resp.data = result;
-            console.log('resp-', resp);
+            // console.log('resp-', resp);
             return res.json(resp);
         });
     } catch (e) {
@@ -235,7 +235,6 @@ const show = async (req, res) => {     // show     ----------------------
             resp.status = true;
             resp.message = 'Row Data Fatch';
             resp.data = result;
-            console.log('data = ', resp);
             return res.json(resp);
         });
     } catch (e) {

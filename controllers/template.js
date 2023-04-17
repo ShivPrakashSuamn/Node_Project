@@ -113,7 +113,6 @@ const update = async (req, res) => {   // update   ----------------------
             resp.status = true;
             resp.message = 'Data Update SuccessFull!';
             resp.data = result;
-            console.log('resp-', resp);
             return res.json(resp);
         });
     } catch (e) {
@@ -166,7 +165,6 @@ const show = async (req, res) => {     // show     ----------------------
             resp.status = true;
             resp.message = 'Row Data Fatch';
             resp.data = result;
-            console.log('data = ', resp);
             return res.json(resp);
         });
     } catch (e) {

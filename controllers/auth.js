@@ -69,20 +69,24 @@ const register = async (req, res) => {     // register  ----------------------
         resp.message = schema.error.details[0].message;
         return res.json(resp);
     }
-    const data = schema.value;
-    console.log('req', data);
-    var salt = bcrypt.genSaltSync(10);
-    var hash = bcrypt.hashSync(data.password, salt);
-    // Insert ----    
-    let sql = "INSERT INTO users (fname, lname, email, password) VALUES ('" + data.fname + "', '" + data.lname + "', '" + data.email + "', '" + hash + "')";
-    await connection.query(sql, function (err, result, fields) {
-        if (err) throw err;
-        resp.status = true;
-        resp.message = 'Registration SuccessFull';
-        resp.data = result;
-        console.log('resp-', resp);
+    try {
+        const data = schema.value;
+        var salt = bcrypt.genSaltSync(10);
+        var hash = bcrypt.hashSync(data.password, salt);
+        // Insert ----    
+        let sql = "INSERT INTO users (fname, lname, email, password) VALUES ('" + data.fname + "', '" + data.lname + "', '" + data.email + "', '" + hash + "')";
+        await connection.query(sql, function (err, result, fields) {
+            if (err) throw err;
+            resp.status = true;
+            resp.message = 'Registration SuccessFull';
+            resp.data = result;
+            console.log('resp-', resp);
+            return res.json(resp);
+        });
+    } catch (e) {
+        console.log('catch error', e);
         return res.json(resp);
-    });
+    }
 }
 
 const forgotpassword = async (req, res) => { // forgot  -----------------------
