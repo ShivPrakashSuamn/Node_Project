@@ -107,7 +107,7 @@ const update = async (req, res) => {   // update   ----------------------
         return res.json(resp);
     }
     try {
-        let sql = "update template set title='" + req.body.title + "',description='" + req.body.description + "',category='" + req.body.category + "',status='" + req.body.status + "'where id = " + req.query.id;
+        let sql = "update template set title='" + req.body.title + "',description='" + req.body.description + "',category='" + req.body.category + "',status='" + 0 + "'where id = " + req.query.id;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
