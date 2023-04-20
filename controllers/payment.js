@@ -130,12 +130,20 @@ const show = async (req, res) => {      // Show line data ---------------------
         return res.json(resp);
     }
     try {
+        let features1 ='';
+        let sql1 = "SELECT * FROM features where id=" + req.query.id;
+        await connection.query(sql1, function (err, result1, fields) {
+            features1 = result1
+        });
         let sql = "SELECT * FROM payment where id=" + req.query.id;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Single Row Data';
-            resp.data = result;
+            resp.data = {
+                data: result,
+                features: features1
+            };
             return res.json(resp);
         });
     } catch (e) {
