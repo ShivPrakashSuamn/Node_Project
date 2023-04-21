@@ -13,12 +13,12 @@ const index = async (req, res) => {     //  index   --------------------------
     var total = 0;
     var offset = 0;
     try {
-        let sql1 = "SELECT payment.id,payment.plan_id,users.fname,users.lname,payment.payment_id,payment.amount,payment.status,payment.created FROM payment JOIN users ON users.id = payment.user_id where plan_id like '%" + search + "%'or user_id LIKE '%" + search + "%'or amount LIKE '%" + search + "%' order by " + order_by + " " + order_type;
+        let sql1 = "SELECT payment.id,plans.title,users.fname,users.lname,payment.payment_id,payment.amount,payment.status,payment.created FROM payment JOIN users JOIN plans ON users.id = payment.user_id and plans.id = payment.plan_id where plan_id like '%" + search + "%'or user_id LIKE '%" + search + "%'or amount LIKE '%" + search + "%' order by " + order_by + " " + order_type;
         await connection.query(sql1, function (err, result1, fields) {
             if (err) throw err;
             total = result1.length;
         });
-        let sql = "SELECT payment.id,payment.plan_id,users.fname,users.lname,payment.payment_id,payment.amount,payment.status,payment.created FROM payment JOIN users ON users.id = payment.user_id where plan_id like '%" + search + "%'or user_id LIKE '%" + search + "%'or amount LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
+        let sql = "SELECT payment.id,plans.title,users.fname,users.lname,payment.payment_id,payment.amount,payment.status,payment.created FROM payment JOIN users JOIN plans ON users.id = payment.user_id and plans.id = payment.plan_id where plan_id like '%" + search + "%'or user_id LIKE '%" + search + "%'or amount LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
