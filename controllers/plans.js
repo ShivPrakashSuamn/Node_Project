@@ -53,7 +53,36 @@ const store = async (req, res) => {     //  Store   --------------------------
     try {
         const data = schema.value;
         let sql = "INSERT INTO plans (admin_id, title, price, offer_price,total_sell,status) VALUES "+
-                    "('"+ data.admin_id +"','"+ data.title +"', '"+ data.price +"', '"+ data.offer_price +"', '"+ data.total_sell +"', '"+ data.status +"')";
+                    "('"+ data.admin_id +"','"+ data.title +"', '"+ data.price +"', '"+ data.offer_price +"', '"+ 0 +"', '"+ data.status +"')";
+        await connection.query(sql, function (err, result, fields) {
+            if (err) throw err;
+            resp.status = true;
+            resp.message = 'Data Save SuccessFull';
+            resp.data = result;
+            return res.json(resp);
+        });
+    } catch (e) {
+        console.log('catch error', e);
+        return res.json(resp);
+    }
+}
+
+const storeFeatures = async (req, res) => { // Store   -------------------------
+    let resp = { status: false, message: 'Oops something went wromg?', data: null }
+    const schema = Joi.object({
+        plan_id: Joi.string().required(),
+        feature_name: Joi.string().required(),
+        feature_value: Joi.string().required(),
+        status: Joi.string().required(),
+    }).validate(req.body);
+    if (schema.error) {
+        resp.message = schema.error.details[0].message;
+        return res.json(resp);
+    }
+    try {
+        const data = schema.value;
+        let sql = "INSERT INTO plans (plan_id, feature_name, feature_value,status) VALUES "+
+                            "('"+ data.plan_id +"','"+ data.feature_name +"', '"+ data.feature_value +"','"+ data.status +"')";
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
@@ -144,4 +173,4 @@ const show = async (req, res) => {      // Show line data ---------------------
     }
 }
 
-module.exports = { index, store, update, deleteRow, show }
+module.exports = { index, store, storeFeatures, update, deleteRow, show }

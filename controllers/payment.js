@@ -41,7 +41,6 @@ const store = async (req, res) => {     //  Store   --------------------------
     const schema = Joi.object({
         plan_id: Joi.string().required(),
         user_id: Joi.string().required(),
-        payment_id: Joi.string().required(),
         amount: Joi.string().required(),
         status : Joi.string().required(),
     }).validate(req.body);
@@ -52,7 +51,7 @@ const store = async (req, res) => {     //  Store   --------------------------
     try {
         const data = schema.value;
                
-        let sql = "INSERT INTO payment (plan_id, user_id, payment_id, amount, status) VALUES ('"+ data.plan_id +"','"+ data.user_id +"', '"+ data.payment_id +"', '"+data.amount+"', '"+ data.status +"')";
+        let sql = "INSERT INTO payment (plan_id, user_id, payment_id, amount, status) VALUES ('"+ data.plan_id +"','"+ data.user_id +"', '"+0+"', '"+data.amount+"', '"+ data.status +"')";
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
@@ -78,8 +77,7 @@ const update = async (req, res) => {    // Update   ---------------------------
     }
     try {
         const data = schema.value;
-        let sql = "update payment set plan_id='"+ req.body.plan_id +"', user_id='"+ req.body.user_id +"', payment_id='"+ req.body.payment_id +"',"+
-                    "amount='"+ req.body.amount +"', status ='"+ req.body.status +"' where id ="+req.query.id;
+        let sql = "update payment set status ='"+ req.body.status +"' where id ="+req.query.id;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
