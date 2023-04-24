@@ -39,12 +39,11 @@ const index = async (req, res) => {     //  index   --------------------------
 const store = async (req, res) => {     //  Store   --------------------------
     let resp = { status: false, message: 'Oops something went wromg?', data: null }
     const schema = Joi.object({
-        admin_id: Joi.string().required(),
         title: Joi.string().required(),
         price: Joi.string().required(),
         offer_price: Joi.string().required(),
-        total_sell: Joi.string().required(),
         status: Joi.string().required(),
+        features:Joi.array().required()
     }).validate(req.body);
     if (schema.error) {
         resp.message = schema.error.details[0].message;
@@ -53,7 +52,7 @@ const store = async (req, res) => {     //  Store   --------------------------
     try {
         const data = schema.value;
         let sql = "INSERT INTO plans (admin_id, title, price, offer_price,total_sell,status) VALUES "+
-                    "('"+ data.admin_id +"','"+ data.title +"', '"+ data.price +"', '"+ data.offer_price +"', '"+ 0 +"', '"+ data.status +"')";
+                    "('"+ 1 +"','"+ data.title +"', '"+ data.price +"', '"+ data.offer_price +"', '"+ 0 +"', '"+ data.status +"')";
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;

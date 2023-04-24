@@ -9,35 +9,35 @@ const path = require("path");
 
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
-    var limit = req.query.limit ? req.query.limit : 10; 
-    var search = req.query.search ? req.query.search : ''; 
-    var page = req.query.page ? req.query.page : 1; 
-    var order_by = req.query.order_by ? req.query.order_by : 'id'; 
-    var order_type = req.query.order_type ? req.query.order_type : 'desc'; 
+    var limit = req.query.limit ? req.query.limit : 10;
+    var search = req.query.search ? req.query.search : '';
+    var page = req.query.page ? req.query.page : 1;
+    var order_by = req.query.order_by ? req.query.order_by : 'id';
+    var order_type = req.query.order_type ? req.query.order_type : 'desc';
     var offset = 0;
-    let total = 0; 
-    if(limit){
-        offset = (page -1)*limit; 
+    let total = 0;
+    if (limit) {
+        offset = (page - 1) * limit;
     }
     try {
-        let sql1 = "SELECT * FROM contact where fname LIKE '%"+search+"%' or lname LIKE '%"+search+"%'or email LIKE '%"+search+"%'or phone LIKE '%"+search+"%'\
-                    or address LIKE '%"+search+"%'or city LIKE '%"+search+"%'or pin_code LIKE '%"+search+"%' order by "+order_by+" "+order_type;
+        let sql1 = "SELECT * FROM contact where fname LIKE '%" + search + "%' or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%'or phone LIKE '%" + search + "%'\
+                    or address LIKE '%"+ search + "%'or city LIKE '%" + search + "%'or pin_code LIKE '%" + search + "%' order by " + order_by + " " + order_type;
         await connection.query(sql1, function (err, result1, fields) {
             if (err) throw err;
-           
+
             // console.log('total row',result1)
             total = result1.length;
         });
-        let sql = "SELECT * FROM contact where fname LIKE '%"+search+"%' or lname LIKE '%"+search+"%'or email LIKE '%"+search+"%' or phone LIKE '%"+search+"%' \
-                    or address LIKE '%"+search+"%'or city LIKE '%"+search+"%'or pin_code LIKE '%"+search+"%'order by "+order_by+" "+order_type+" limit "+offset+","+limit;
+        let sql = "SELECT * FROM contact where fname LIKE '%" + search + "%' or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' or phone LIKE '%" + search + "%' \
+                    or address LIKE '%"+ search + "%'or city LIKE '%" + search + "%'or pin_code LIKE '%" + search + "%'order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Data Fatch SuccessFull';
             resp.data = {
-                data:result,
-                total:total,
-                page:page
+                data: result,
+                total: total,
+                page: page
             };
             // console.log('data = ', resp);
             return res.json(resp);
@@ -66,10 +66,9 @@ const store = async (req, res) => {    // store    ----------------------
         resp.message = schema.error.details[0].message;
         return res.json(resp);
     }
-    let fileUplad ='' ;
-    if(req.file == undefined){
+    let fileUplad = '';
+    if (req.file == undefined) {
         fileUplad = null;
-        console.log('data---',req.file);
     } else {
         fileUplad = req.file.filename;
     }
@@ -77,7 +76,7 @@ const store = async (req, res) => {    // store    ----------------------
         const data = schema.value;
         // Insert ---
         let sql = "INSERT INTO contact (fname,lname,email,dob,phone,image,address,city,pin_code,status)" +
-            " VALUES ('" + data.fname + "','" +data.lname+ "','" +data.email+ "','" +data.dob+ "','" +data.phone+ "','" +fileUplad+ "','" +data.address+ "','" +data.city + "','" + data.pincode + "',0)";
+            " VALUES ('" + data.fname + "','" + data.lname + "','" + data.email + "','" + data.dob + "','" + data.phone + "','" + fileUplad + "','" + data.address + "','" + data.city + "','" + data.pincode + "',0)";
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
@@ -95,17 +94,17 @@ const store = async (req, res) => {    // store    ----------------------
 const CSVstore = async (req, res) => {  // CSVstore  ----------------------
     let resp = { status: false, message: 'Oops something went wrong', data: null };
     // Validation ----
-        // const schema = Joi.object({
-        //     csvfile: Joi.string().required(),
-        // }).validate(req.file);
+    // const schema = Joi.object({
+    //     csvfile: Joi.string().required(),
+    // }).validate(req.file);
 
-        // if (schema.error) {
-        //     resp.message = schema.error.details[0].message;
-        //     return res.json(resp);
-        // }
+    // if (schema.error) {
+    //     resp.message = schema.error.details[0].message;
+    //     return res.json(resp);
+    // }
     // CSV  ---- 
     if (req.file.filename) {
-        console.log('file----',req.file.filename);
+        console.log('file----', req.file.filename);
         const fileName = config.BASEURL + '/uploads/tmp/' + req.file.filename;
 
         const fs = require("fs");
@@ -166,24 +165,35 @@ const update = async (req, res) => {   // update   ----------------------
         resp.message = schema.error.details[0].message;
         return res.json(resp);
     }
-    let fileUplad ='' ;
-    if(req.file == undefined){
-        fileUplad = null;
-        console.log('data---',req.file);
-    } else {
-        fileUplad = req.file.filename;
-    }
+    let fileUplad = '';
     try {
-        let sql = "update contact set fname='"+ req.body.fname +"',lname='"+ req.body.lname +"',email='"+ req.body.email +"',dob='"+ req.body.dob +"',phone='"+ req.body.phone +"'," +
-            "image='"+ fileUplad +"',address='"+ req.body.address +"',city='"+ req.body.city +"',pin_code='"+ req.body.pincode +"',status='"+ req.body.status +"' where id = " + req.query.id;
-        await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
-            resp.status = true;
-            resp.message = 'Data Update SuccessFull!';
-            resp.data = result;
-            console.log('resp-', resp);
-            return res.json(resp);
-        });
+        if (req.file == undefined) {
+            let sql1 = "SELECT `contact`.`image` FROM `contact` where id=" + req.query.id;
+            await connection.query(sql1, async (err, result1, fields) => {
+                if (err) throw err;
+                fileUplad = result1[0].image;
+                let sql = "update contact set fname='" + req.body.fname + "',lname='" + req.body.lname + "',email='" + req.body.email + "',dob='" + req.body.dob + "',phone='" + req.body.phone + "'," +
+                    "image='" + fileUplad + "',address='" + req.body.address + "',city='" + req.body.city + "',pin_code='" + req.body.pincode + "',status='" + req.body.status + "' where id = " + req.query.id;
+                await connection.query(sql, function (err, result, fields) {
+                    if (err) throw err;
+                    resp.status = true;
+                    resp.message = 'Data Update SuccessFull!';
+                    resp.data = result;
+                    return res.json(resp);
+                });
+            });
+        } else {
+            fileUplad = req.file.filename;
+            let sql = "update contact set fname='" + req.body.fname + "',lname='" + req.body.lname + "',email='" + req.body.email + "',dob='" + req.body.dob + "',phone='" + req.body.phone + "'," +
+                "image='" + fileUplad + "',address='" + req.body.address + "',city='" + req.body.city + "',pin_code='" + req.body.pincode + "',status='" + req.body.status + "' where id = " + req.query.id;
+            await connection.query(sql, function (err, result, fields) {
+                if (err) throw err;
+                resp.status = true;
+                resp.message = 'Data Update SuccessFull!';
+                resp.data = result;
+                return res.json(resp);
+            });
+        }
     } catch (e) {
         console.log('Catch error', e);
         resp.message = 'Error Update System';

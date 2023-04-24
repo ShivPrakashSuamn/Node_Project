@@ -2,6 +2,7 @@ const Joi = require('joi');
 const { json } = require('express');
 const connection = require('../helper/db');
 const bcrypt = require('bcryptjs');
+var generator = require('generate-password');
 
 const index = async (req, res) => {     //  index   --------------------------
     let resp = { status: false, message: 'Oops Something went wrong ?', data: null }
@@ -19,14 +20,14 @@ const index = async (req, res) => {     //  index   --------------------------
         //         console.log('User count->', resultCount[0].countUser);
         //        // total = result1.length ;
         //     });
-        let sql1 = "SELECT * FROM users where fname like '%" + search + "%'or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' order by " + order_by + " " + order_type;
+        let sql1 = "SELECT users.id,users.fname,users.lname,users.email,users.mobile,users.image,users.created FROM `users` where fname like '%" + search + "%'or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' order by " + order_by + " " + order_type;
         await connection.query(sql1, function (err, result1, fields) {
             if (err) throw err;
             total = result1.length;
         });
-        let sql = "SELECT * FROM users where fname like '%" + search + "%'or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
+        let sql = "SELECT users.id,users.fname,users.lname,users.email,users.mobile,users.image,users.created FROM `users` where fname like '%" + search + "%'or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
         await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
+            if (err) throw err; 
             resp.status = true;
             resp.message = 'Data Fatch SuccessFull';
             resp.data = {
@@ -48,23 +49,43 @@ const store = async (req, res) => {     //  Store   --------------------------
         fname: Joi.string().required(),
         lname: Joi.string().required(),
         email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ["com", "net"] }, }),
-        password: Joi.string().min(4).max(8).required(),
+        mobile: Joi.string().required(),
     }).validate(req.body);
     if (schema.error) {
         resp.message = schema.error.details[0].message;
         return res.json(resp);
     }
+    let fileUplad = '';
+    if (req.file == undefined) {
+        fileUplad = null;
+    } else {
+        fileUplad = req.file.filename;
+    }
+    var password = generator.generate({ // generate password ---
+        length: 6,
+        numbers: true
+    });
     try {
         const data = schema.value;
         var salt = bcrypt.genSaltSync(10);
-        var hash = bcrypt.hashSync(data.password, salt);
-        let sql = "INSERT INTO users (fname, lname, email, password) VALUES ('" + data.fname + "','" + data.lname + "', '" + data.email + "', '" + hash + "')";
-        await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
-            resp.status = true;
-            resp.message = 'Data Save SuccessFull';
-            resp.data = result;
-            return res.json(resp);
+        var hash = bcrypt.hashSync(password, salt);
+        let sql1 = "SELECT * FROM `users` WHERE email = '" + data.email + "'";
+        await connection.query(sql1, async (err, result1, fields) => {
+
+            if (result1.length) {
+                resp.message = 'Email Already Exist';
+                resp.data = result1;
+                return res.json(resp);
+            } else {
+                let sql = "INSERT INTO users (fname,lname,email,password,mobile,image)VALUES('" + data.fname + "','" + data.lname + "','" + data.email + "','" + hash + "','" + data.mobile + "','" + fileUplad + "')";
+                await connection.query(sql, function (err, result, fields) {
+                    if (err) throw err;
+                    resp.status = true;
+                    resp.message = 'Data Save SuccessFull';
+                    resp.data = result;
+                    return res.json(resp);
+                });
+            }
         });
     } catch (e) {
         console.log('catch error', e);
@@ -81,17 +102,45 @@ const update = async (req, res) => {    // Update   ---------------------------
         resp.message = schema.error.details[0].message;
         return res.json(resp);
     }
+    let fileUplad = '';
+    const data = schema.value;
     try {
-        const data = schema.value;
-        var salt = bcrypt.genSaltSync(10);
-        var hash = bcrypt.hashSync(req.body.password , salt);
-        let sql = "update users set fname='"+ req.body.fname +"', lname='"+ req.body.lname +"', email='"+ req.body.email +"', password='"+ hash +"' where id ="+req.query.id;
-        await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
-            resp.status = true;
-            resp.message = 'Update data Successfull';
-            resp.data = result;
-            return res.json(resp);
+        let sql1 = "SELECT * FROM `users` WHERE email = '" + req.body.email + "'";
+        await connection.query(sql1, async (err, result1, fields) => {
+            console.log('email he ', result1)
+            if (result1.length) {
+                resp.message = 'Email Already Exist';
+                resp.data = result1;
+                console.log('email he ')
+                return res.json(resp);
+            } else {
+                if (req.file == undefined) {
+                    let sql2 = "SELECT users.image FROM `users` where id=" + req.query.id;
+                    await connection.query(sql2, async (err, result2, fields) => {
+                        if (err) throw err;
+                        fileUplad = result2[0].image;
+                        let sql = "update users set fname='" + req.body.fname + "', lname='" + req.body.lname + "', email='" + req.body.email + "', mobile='" + req.body.mobile + "',image='" + fileUplad + "' where id =" + data.id;
+                        await connection.query(sql, function (err, result, fields) {
+                            if (err) throw err;
+                            resp.status = true;
+                            resp.message = 'Update data Successfull';
+                            resp.data = result;
+                            return res.json(resp);
+                        });
+                    });
+                } else {
+                    fileUplad = req.file.filename;
+                    let sql = "update users set fname='" + req.body.fname + "', lname='" + req.body.lname + "', email='" + req.body.email + "', mobile='" + req.body.mobile + "',image='" + fileUplad + "' where id =" + data.id;
+                    await connection.query(sql, function (err, result, fields) {
+                        if (err) throw err;
+                        resp.status = true;
+                        resp.message = 'Update data Successfull';
+                        resp.data = result;
+                        return res.json(resp);
+                    });
+
+                }
+            }
         });
     } catch (e) {
         console.log('catch error', e);
@@ -99,7 +148,7 @@ const update = async (req, res) => {    // Update   ---------------------------
     }
 }
 
-const deleteRow = async(req, res) => {  // Delete Data ------------------------
+const deleteRow = async (req, res) => {  // Delete Data ------------------------
     let resp = { status: false, message: 'Oops Something wemt worng ?', data: null }
     // validation -- 
     const schema = Joi.object({
@@ -136,7 +185,7 @@ const show = async (req, res) => {      // Show line data ---------------------
         return res.json(resp);
     }
     try {
-        let sql = "SELECT * FROM users where id=" + req.query.id;
+        let sql = "SELECT users.id,users.fname,users.lname,users.email,users.mobile,users.image,users.created FROM `users` where id=" + req.query.id;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
