@@ -11,6 +11,7 @@ const templateRouter = require('./routes/template');
 const userRouter = require('./routes/user');
 const plansRouter = require('./routes/plans');
 const paymentRouter = require('./routes/payment');
+const settingRouter = require('./routes/setting');
 const jwt = require('./helper/jwt');
 
 var app = express();
@@ -29,6 +30,7 @@ app.use('/template', templateRouter);
 app.use('/user', userRouter);
 app.use('/plans', plansRouter);
 app.use('/payment', paymentRouter);
+app.use('/setting', settingRouter);
 
 app.get('/uploads/images/:images', (req, res) => {
     res.sendFile(path.join(__dirname + '/uploads/images/' + req.params.images));
