@@ -1,4 +1,3 @@
-const TEMPLATE_CATEGORY = ['ecommerce','beauty','bodyBuild']
+const TEMPLATE_CATEGORY = ['Ecommerce','Beauty','BodyBuild','Travels','Study']
 
-
-module.exports = [TEMPLATE_CATEGORY]
+module.exports = { TEMPLATE_CATEGORY }

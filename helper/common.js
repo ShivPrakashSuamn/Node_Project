@@ -1,5 +1,6 @@
 const extract = require('extract-zip');
 var fs = require('fs');
+
 // zip file extact ---
 const opne_zip = async (source, target) => {
     console.log('open_zip')
@@ -11,6 +12,7 @@ const opne_zip = async (source, target) => {
         return false;
     }
 }
+
 // new Folder generate --
 const createFolder = async (path) => {
     try {
@@ -24,6 +26,7 @@ const createFolder = async (path) => {
 const folderExist = async (path) => {
     return fs.existsSync(path);
 }
+
 // Delete file ----
 const deleteTmpZip = async (file_path) => {
     // console.log('delete path-', file_path);
@@ -32,6 +35,17 @@ const deleteTmpZip = async (file_path) => {
         return true;
     }
 }
+
+// Delete Folder ----
+const deleteFolder = async (file_path) => {
+    fs.rm(file_path, { recursive: true, force: true }, err => {
+        if (err) {
+            throw err;
+        }
+        console.log(`${file_path} is deleted!`);
+    });
+}
+
 const format = (date) => {
     if (!(date instanceof Date)) {
         throw new Error('Invalid "date" argument. You must pass a date instance')
@@ -44,4 +58,4 @@ const format = (date) => {
     return `${year}-${month}-${day}`
 }
 
-module.exports = { opne_zip, createFolder, folderExist, deleteTmpZip, format };
+module.exports = { opne_zip, createFolder, folderExist, deleteTmpZip, format, deleteFolder };

@@ -107,11 +107,9 @@ const update = async (req, res) => {    // Update   ---------------------------
     try {
         let sql1 = "SELECT * FROM `users` WHERE email = '" + req.body.email + "'";
         await connection.query(sql1, async (err, result1, fields) => {
-            console.log('email he ', result1)
-            if (result1.length) {
+            if (result1.length > 1) {
                 resp.message = 'Email Already Exist';
                 resp.data = result1;
-                console.log('email he ')
                 return res.json(resp);
             } else {
                 if (req.file == undefined) {
