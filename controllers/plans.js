@@ -78,35 +78,6 @@ const store = async (req, res) => {     //  Store   --------------------------
     }
 }
 
-const storeFeatures = async (req, res) => { // Store   -------------------------
-    let resp = { status: false, message: 'Oops something went wromg?', data: null }
-    const schema = Joi.object({
-        plan_id: Joi.string().required(),
-        feature_name: Joi.string().required(),
-        feature_value: Joi.string().required(),
-        status: Joi.string().required(),
-    }).validate(req.body);
-    if (schema.error) {
-        resp.message = schema.error.details[0].message;
-        return res.json(resp);
-    }
-    try {
-        const data = schema.value;
-        let sql = "INSERT INTO plans (plan_id, feature_name, feature_value,status) VALUES " +
-            "('" + data.plan_id + "','" + data.feature_name + "', '" + data.feature_value + "','" + data.status + "')";
-        await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
-            resp.status = true;
-            resp.message = 'Data Save SuccessFull';
-            resp.data = result;
-            return res.json(resp);
-        });
-    } catch (e) {
-        console.log('catch error', e);
-        return res.json(resp);
-    }
-}
-
 const update = async (req, res) => {    // Update   ---------------------------
     let resp = { status: false, message: 'Oops Something went wrong?', data: null }
     const schema = Joi.object({
@@ -118,9 +89,24 @@ const update = async (req, res) => {    // Update   ---------------------------
     }
     try {
         const data = schema.value;
+        const categoryData = req.body.features;
+        let sql1 = "DELETE FROM `features` WHERE `plan_id` = '" + req.query.id + "'";
+        await connection.query(sql1, async function (err, result, fields) {
+            if (err) throw err;
+        });
         let sql = "update plans set `admin_id`='" + req.body.admin_id + "', title='" + req.body.title + "', price='" + req.body.price + "', offer_price='" + req.body.offer_price + "'," +
-            "total_sell='" + req.body.total_sell + "', status='" + req.body.status + "' where id ='" + req.query.id + "'"
-        await connection.query(sql, function (err, result, fields) {
+            "total_sell='" + req.body.total_sell + "', status='" + req.body.status + "' where id ='" + req.query.id + "'";
+        await connection.query(sql, async function (err, result, fields) {
+            let id = req.query.id;
+            for (var i = 0; i < categoryData.length; i++) {
+                var feature_name = categoryData[i]["feature_name"],
+                    feature_value = categoryData[i]["feature_value"]
+                let sql1 = "INSERT INTO features (plan_id, feature_name, feature_value, status) VALUES " +
+                    "('" + id + "','" + feature_name + "', '" + feature_value + "', '" + 0 + "')";
+                await connection.query(sql1, function (err, result1, fields) {
+                    if (err) throw err;
+                });
+            }
             if (err) throw err;
             resp.status = true;
             resp.message = 'Update data Successfull';
@@ -173,7 +159,7 @@ const show = async (req, res) => {      // Show line data ---------------------
         let cg_Data = '';
         let sql1 = "SELECT * FROM `features` WHERE plan_id =" + req.query.id;
         await connection.query(sql1, function (err, result1, fields) {
-            if(err) throw err;
+            if (err) throw err;
             cg_Data = result1;
         });
         let sql = "SELECT * FROM plans where id=" + req.query.id;
@@ -182,8 +168,8 @@ const show = async (req, res) => {      // Show line data ---------------------
             resp.status = true;
             resp.message = 'Single Row Data';
             resp.data = {
-                data : result,
-                category : cg_Data
+                data: result,
+                category: cg_Data
             }
             return res.json(resp);
         });
@@ -193,4 +179,4 @@ const show = async (req, res) => {      // Show line data ---------------------
     }
 }
 
-module.exports = { index, store, storeFeatures, update, deleteRow, show }
+module.exports = { index, store, update, deleteRow, show }
