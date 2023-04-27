@@ -43,7 +43,7 @@ const store = async (req, res) => {     //  Store   --------------------------
         price: Joi.string().required(),
         offer_price: Joi.string().required(),
         status: Joi.string().required(),
-        features:Joi.array().required()
+        features: Joi.array().required()
     }).validate(req.body);
     if (schema.error) {
         resp.message = schema.error.details[0].message;
@@ -51,9 +51,21 @@ const store = async (req, res) => {     //  Store   --------------------------
     }
     try {
         const data = schema.value;
-        let sql = "INSERT INTO plans (admin_id, title, price, offer_price,total_sell,status) VALUES "+
-                    "('"+ 1 +"','"+ data.title +"', '"+ data.price +"', '"+ data.offer_price +"', '"+ 0 +"', '"+ data.status +"')";
-        await connection.query(sql, function (err, result, fields) {
+        const categoryData = schema.value.features;
+
+        let sql = "INSERT INTO plans (admin_id, title, price, offer_price,total_sell,status) VALUES " +
+            "('" + 1 + "','" + data.title + "', '" + data.price + "', '" + data.offer_price + "', '" + 0 + "', '" + data.status + "')";
+        await connection.query(sql, async function (err, result, fields) {
+            let id = result.insertId;
+            for (var i = 0; i < categoryData.length; i++) {
+                var feature_name = categoryData[i]["feature_name"],
+                    feature_value = categoryData[i]["feature_value"]
+                let sql1 = "INSERT INTO features (plan_id, feature_name, feature_value, status) VALUES " +
+                    "('" + id + "','" + feature_name + "', '" + feature_value + "', '" + 0 + "')";
+                await connection.query(sql1, function (err, result1, fields) {
+                    if (err) throw err;
+                });
+            }
             if (err) throw err;
             resp.status = true;
             resp.message = 'Data Save SuccessFull';
@@ -80,8 +92,8 @@ const storeFeatures = async (req, res) => { // Store   -------------------------
     }
     try {
         const data = schema.value;
-        let sql = "INSERT INTO plans (plan_id, feature_name, feature_value,status) VALUES "+
-                            "('"+ data.plan_id +"','"+ data.feature_name +"', '"+ data.feature_value +"','"+ data.status +"')";
+        let sql = "INSERT INTO plans (plan_id, feature_name, feature_value,status) VALUES " +
+            "('" + data.plan_id + "','" + data.feature_name + "', '" + data.feature_value + "','" + data.status + "')";
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
@@ -106,8 +118,8 @@ const update = async (req, res) => {    // Update   ---------------------------
     }
     try {
         const data = schema.value;
-        let sql =  "update plans set `admin_id`='"+ req.body.admin_id +"', title='"+ req.body.title +"', price='"+ req.body.price +"', offer_price='"+ req.body.offer_price +"',"+
-                    "total_sell='"+ req.body.total_sell +"', status='"+ req.body.status +"' where id ='"+req.query.id+"'"
+        let sql = "update plans set `admin_id`='" + req.body.admin_id + "', title='" + req.body.title + "', price='" + req.body.price + "', offer_price='" + req.body.offer_price + "'," +
+            "total_sell='" + req.body.total_sell + "', status='" + req.body.status + "' where id ='" + req.query.id + "'"
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
@@ -121,7 +133,7 @@ const update = async (req, res) => {    // Update   ---------------------------
     }
 }
 
-const deleteRow = async(req, res) => {  // Delete Data ------------------------
+const deleteRow = async (req, res) => {  // Delete Data ------------------------
     let resp = { status: false, message: 'Oops Something wemt worng ?', data: null }
     // validation -- 
     const schema = Joi.object({
@@ -158,12 +170,21 @@ const show = async (req, res) => {      // Show line data ---------------------
         return res.json(resp);
     }
     try {
+        let cg_Data = '';
+        let sql1 = "SELECT * FROM `features` WHERE plan_id =" + req.query.id;
+        await connection.query(sql1, function (err, result1, fields) {
+            if(err) throw err;
+            cg_Data = result1;
+        });
         let sql = "SELECT * FROM plans where id=" + req.query.id;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Single Row Data';
-            resp.data = result;
+            resp.data = {
+                data : result,
+                category : cg_Data
+            }
             return res.json(resp);
         });
     } catch (e) {

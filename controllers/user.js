@@ -27,7 +27,7 @@ const index = async (req, res) => {     //  index   --------------------------
         });
         let sql = "SELECT users.id,users.fname,users.lname,users.email,users.mobile,users.image,users.created FROM `users` where fname like '%" + search + "%'or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
         await connection.query(sql, function (err, result, fields) {
-            if (err) throw err; 
+            if (err) throw err;
             resp.status = true;
             resp.message = 'Data Fatch SuccessFull';
             resp.data = {
@@ -105,19 +105,15 @@ const update = async (req, res) => {    // Update   ---------------------------
     let fileUplad = '';
     const data = schema.value;
     try {
-        let sql1 = "SELECT * FROM `users` WHERE email = '" + req.body.email + "'";
+        let sql1 = "SELECT users.email FROM users where id ='" + data.id + "'"
         await connection.query(sql1, async (err, result1, fields) => {
-            if (result1.length > 1) {
-                resp.message = 'Email Already Exist';
-                resp.data = result1;
-                return res.json(resp);
-            } else {
+            if (req.body.email == result1[0].email) {
                 if (req.file == undefined) {
                     let sql2 = "SELECT users.image FROM `users` where id=" + req.query.id;
                     await connection.query(sql2, async (err, result2, fields) => {
                         if (err) throw err;
                         fileUplad = result2[0].image;
-                        let sql = "update users set fname='" + req.body.fname + "', lname='" + req.body.lname + "', email='" + req.body.email + "', mobile='" + req.body.mobile + "',image='" + fileUplad + "' where id =" + data.id;
+                        let sql = "update users set fname='" + req.body.fname + "', lname='" + req.body.lname + "', mobile='" + req.body.mobile + "',image='" + fileUplad + "' where id =" + data.id;
                         await connection.query(sql, function (err, result, fields) {
                             if (err) throw err;
                             resp.status = true;
@@ -128,7 +124,7 @@ const update = async (req, res) => {    // Update   ---------------------------
                     });
                 } else {
                     fileUplad = req.file.filename;
-                    let sql = "update users set fname='" + req.body.fname + "', lname='" + req.body.lname + "', email='" + req.body.email + "', mobile='" + req.body.mobile + "',image='" + fileUplad + "' where id =" + data.id;
+                    let sql = "update users set fname='" + req.body.fname + "', lname='" + req.body.lname + "', mobile='" + req.body.mobile + "',image='" + fileUplad + "' where id =" + data.id;
                     await connection.query(sql, function (err, result, fields) {
                         if (err) throw err;
                         resp.status = true;
@@ -136,8 +132,42 @@ const update = async (req, res) => {    // Update   ---------------------------
                         resp.data = result;
                         return res.json(resp);
                     });
-
                 }
+            } else {
+                let sql2 = "SELECT * FROM `users` WHERE email = '" + req.body.email + "'";
+                await connection.query(sql2, async (err, result2, fields) => {
+                    if (result2.length > 0) {
+                        resp.message = 'Email Already Exist';
+                        resp.data = result2;
+                        return res.json(resp);
+                    } else {
+                        if (req.file == undefined) {
+                            let sql2 = "SELECT users.image FROM `users` where id=" + req.query.id;
+                            await connection.query(sql2, async (err, result2, fields) => {
+                                if (err) throw err;
+                                fileUplad = result2[0].image;
+                                let sql = "update users set fname='" + req.body.fname + "', lname='" + req.body.lname + "', email='" + req.body.email + "', mobile='" + req.body.mobile + "',image='" + fileUplad + "' where id =" + data.id;
+                                await connection.query(sql, function (err, result, fields) {
+                                    if (err) throw err;
+                                    resp.status = true;
+                                    resp.message = 'Update data Successfull';
+                                    resp.data = result;
+                                    return res.json(resp);
+                                });
+                            });
+                        } else {
+                            fileUplad = req.file.filename;
+                            let sql = "update users set fname='" + req.body.fname + "', lname='" + req.body.lname + "', email='" + req.body.email + "', mobile='" + req.body.mobile + "',image='" + fileUplad + "' where id =" + data.id;
+                            await connection.query(sql, function (err, result, fields) {
+                                if (err) throw err;
+                                resp.status = true;
+                                resp.message = 'Update data Successfull';
+                                resp.data = result;
+                                return res.json(resp);
+                            });
+                        }
+                    }
+                });
             }
         });
     } catch (e) {

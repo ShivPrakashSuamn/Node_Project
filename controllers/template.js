@@ -3,7 +3,6 @@ const connection = require('../helper/db');
 const path = require("path");
 const config = require('../config');
 const { opne_zip, createFolder, folderExist, deleteTmpZip, deleteFolder } = require('../helper/common');
-const { TEMPLATE_CATEGORY } = require('../helper/constant');
 
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
@@ -32,8 +31,7 @@ const index = async (req, res) => {     // index    ----------------------
             resp.data = {
                 data: result,
                 page: page,
-                total: total,
-                category: TEMPLATE_CATEGORY
+                total: total
             };
 
             // console.log('data = ', resp);
@@ -111,7 +109,7 @@ const update = async (req, res) => {   // update   ----------------------
     }
     try {
         if (req.file == undefined) {
-            console.log('---', req.file)
+
             let sql = "update template set title='" + req.body.title + "',description='" + req.body.description + "',category='" + req.body.category + "',status='" + 0 + "'where id = " + req.query.id;
             await connection.query(sql, function (err, result, fields) {
                 if (err) throw err;
@@ -121,21 +119,23 @@ const update = async (req, res) => {   // update   ----------------------
                 return res.json(resp);
             });
         } else {
+            let id = req.query.id;
+            let deleteDir = config.BASEURL + `/uploads/templates/${id}`;
+            await deleteFolder(deleteDir);  // delete Folder ---- 
+
             let sql = "update template set title='" + req.body.title + "',description='" + req.body.description + "',category='" + req.body.category + "',status='" + 0 + "'where id = " + req.query.id;
             await connection.query(sql, async function (err, result, fields) {
-                let id = req.query.id;
-                let deleteDir = config.BASEURL + `/uploads/templates/${id}`;
-                await deleteFolder(deleteDir);  // delete Folder ----
+
                 // Folder create---
                 var dir = config.BASEURL + '/uploads/templates/' + id;
                 await createFolder(dir);
-                // extract zip on this folder 
+                // // extract zip on this folder 
                 if (folderExist(dir)) {
                     let source = config.BASEURL + '/uploads/tmp/' + req.file.filename;
                     let target = config.BASEURL + '/uploads/templates/' + id;
                     await opne_zip(source, target, true);
-
-                    // repo path  add table, 
+                    
+                    // repo path  add table,  
                     var repo_pat = '/uploads/templates/' + id;
                     var index_pat = '/uploads/templates/' + id + '/index.html';
                     var draft_pat = '/uploads/templates/' + id + '/draft.html';
@@ -147,7 +147,7 @@ const update = async (req, res) => {   // update   ----------------------
                     });
                 }
                 resp.status = true;
-                resp.message = 'Data Update SuccessFull!';
+                resp.message = 'Data store SuccessFull!';
                 resp.data = {};//result;
                 return res.json(resp);
             });
@@ -203,7 +203,6 @@ const show = async (req, res) => {     // show     ----------------------
             resp.message = 'Row Data Fatch';
             resp.data = {
                 data: result,
-                category: TEMPLATE_CATEGORY
             };
             return res.json(resp);
         });
@@ -213,18 +212,4 @@ const show = async (req, res) => {     // show     ----------------------
     }
 }
 
-const category = async (req, res) => {     // index    ----------------------
-    var resp = { status: false, message: 'Oops Something went wrong', data: null };
-
-    try {
-        resp.status = true;
-        resp.message = 'Fatch Data FuccessFull';
-        resp.data = TEMPLATE_CATEGORY;
-        return res.json(resp);
-    } catch (e) {
-        console.log('Catch error', e);
-        return res.json(resp);
-    }
-}
-
-module.exports = { index, store, update, deleteRow, show, category };
+module.exports = { index, store, update, deleteRow, show };

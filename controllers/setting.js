@@ -1,8 +1,3 @@
-const Joi = require('joi');
-const connection = require('../helper/db');
-const path = require("path");
-const config = require('../config');
-const { opne_zip, createFolder, folderExist, deleteTmpZip, deleteFolder } = require('../helper/common');
 const constant = require('../helper/constant');
 
 const getSetting = async (req, res) => {     // index    ----------------------
@@ -10,6 +5,7 @@ const getSetting = async (req, res) => {     // index    ----------------------
 
     try {
         let key = req.params.key;
+        console.log('--', key)
         resp.status = true;
         resp.message = 'Fatch Data FuccessFull';
         resp.data = constant[key];

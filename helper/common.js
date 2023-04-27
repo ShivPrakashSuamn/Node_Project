@@ -7,16 +7,23 @@ const opne_zip = async (source, target) => {
     try {
         extract(source, { dir: target });
         console.log('-Extraction complete-');
+        return true;
     } catch (err) {
         console.log('error -', err);
         return false;
     }
 }
 
+// Delete Folder ----
+const deleteFolder = async (file_path) => {
+    await fs.rm(file_path, { recursive: true, force: true }, err => { });
+    return true;
+}
+
 // new Folder generate --
 const createFolder = async (path) => {
     try {
-        fs.mkdirSync(path, 0777);
+        await fs.mkdirSync(path, 0777);
         return true;
     } catch (err) {
         return false;
@@ -34,16 +41,6 @@ const deleteTmpZip = async (file_path) => {
         fs.unlinkSync(file_path);
         return true;
     }
-}
-
-// Delete Folder ----
-const deleteFolder = async (file_path) => {
-    fs.rm(file_path, { recursive: true, force: true }, err => {
-        if (err) {
-            throw err;
-        }
-        console.log(`${file_path} is deleted!`);
-    });
 }
 
 const format = (date) => {

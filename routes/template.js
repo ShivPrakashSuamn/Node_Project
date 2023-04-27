@@ -9,6 +9,5 @@ app.post('/store', fileUpload, templateController.store);
 app.post('/update',fileUpload, templateController.update);
 app.get('/delete', templateController.deleteRow);
 app.get('/show', templateController.show);
-app.get('/category', templateController.category);
 
 module.exports = app;
