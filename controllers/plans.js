@@ -162,7 +162,7 @@ const show = async (req, res) => {      // Show line data ---------------------
             if (err) throw err;
             cg_Data = result1;
         });
-        let sql = "SELECT * FROM plans where id=" + req.query.id;
+        let sql = "SELECT plans.*, COUNT(features.feature_name) as total_features FROM plans JOIN features ON plans.id = features.plan_id where plans.id =" + req.query.id;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
