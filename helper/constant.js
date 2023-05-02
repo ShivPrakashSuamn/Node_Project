@@ -1,3 +1,5 @@
-const TEMPLATE_CATEGORY = ['Ecommerce','Beauty','BodyBuild','Travels','Study']
+const TEMPLATE_CATEGORY = ['Ecommerce','Beauty','BodyBuild','Travels','Study'];
 
-module.exports = { TEMPLATE_CATEGORY }
+const SETTING_TYPE = ['Image','Text','Number'];
+
+module.exports = { TEMPLATE_CATEGORY, SETTING_TYPE }

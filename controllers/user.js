@@ -14,12 +14,6 @@ const index = async (req, res) => {     //  index   --------------------------
     var total = 0;
     var offset = 0;
     try {
-        // let sqlCount ="SELECT COUNT(id) as countUser FROM `users`";
-        //     await connection.query(sqlCount, function(err, resultCount, fields){
-        //         if(err) throw err ;
-        //         console.log('User count->', resultCount[0].countUser);
-        //        // total = result1.length ;
-        //     });
         let sql1 = "SELECT users.id,users.fname,users.lname,users.email,users.mobile,users.image,users.created FROM `users` where fname like '%" + search + "%'or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' order by " + order_by + " " + order_type;
         await connection.query(sql1, function (err, result1, fields) {
             if (err) throw err;
@@ -39,6 +33,7 @@ const index = async (req, res) => {     //  index   --------------------------
             return res.json(resp);
         })
     } catch (e) {
+        console.log('catch error', e);
         return res.json(resp);
     }
 }
