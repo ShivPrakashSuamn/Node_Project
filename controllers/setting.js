@@ -28,25 +28,32 @@ const index = async (req, res) => {     //  index   --------------------------
     var order_type = req.query.order_type ? req.query.order_type : 'desc';
     var total = 0;
     var offset = 0;
+    var totalPage = 0;
     try {
+        if (limit) {
+            offset = (page - 1) * limit;
+        }
         let sql1 = "SELECT * FROM `settings` where  `id` LIKE '%" + search + "%' or `key` LIKE '%" + search + "%' or `type` LIKE '%" + search + "%' order by " + order_by + " " + order_type;
-        await connection.query(sql1, function (err, result1, fields) {
+        await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
             total = result1.length;
+            totalPage = Math.ceil(total / limit);
+
+            let sql = "SELECT * FROM `settings` where  `id` LIKE '%" + search + "%' or `key` LIKE '%" + search + "%' or `type` LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
+            await connection.query(sql, function (err, result, fields) {
+                if (err) throw err;
+                resp.status = true;
+                resp.message = 'Data Fatch SuccessFull';
+                resp.data = {
+                    data: result,
+                    limit: limit,
+                    page: page,
+                    allUser: total,
+                    totalPage: totalPage
+                };
+                return res.json(resp);
+            });
         });
-        let sql = "SELECT * FROM `settings` where  `id` LIKE '%" + search + "%' or `key` LIKE '%" + search + "%' or `type` LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
-        await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
-            resp.status = true;
-            resp.message = 'Data Fatch SuccessFull';
-            resp.data = {
-                data: result,
-                limit: limit,
-                page: page,
-                allUser: total
-            };
-            return res.json(resp);
-        })
     } catch (e) {
         console.log('catch error', e);
         return res.json(resp);

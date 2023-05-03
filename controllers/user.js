@@ -15,25 +15,30 @@ const index = async (req, res) => {     //  index   --------------------------
     var totalPage = 0;
     var offset = 0;
     try {
+        if (limit) {
+            offset = (page - 1) * limit;
+        }
         let sql1 = "SELECT users.id,users.fname,users.lname,users.email,users.mobile,users.image,users.created FROM `users` where fname like '%" + search + "%'or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' order by " + order_by + " " + order_type;
-        await connection.query(sql1, function (err, result1, fields) {
+        await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
             total = result1.length;
             totalPage = Math.ceil(total/limit);
+
+            let sql = "SELECT users.id,users.fname,users.lname,users.email,users.mobile,users.image,users.created FROM `users` where fname like '%" + search + "%'or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
+            await connection.query(sql, function (err, result, fields) {
+                if (err) throw err;
+                resp.status = true;
+                resp.message = 'Data Fatch SuccessFull';
+                resp.data = {
+                    data: result,
+                    limit: limit,
+                    page: page,
+                    allUser: total,
+                    totalPage: totalPage 
+                };
+                return res.json(resp);
+            });
         });
-        let sql = "SELECT users.id,users.fname,users.lname,users.email,users.mobile,users.image,users.created FROM `users` where fname like '%" + search + "%'or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
-        await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
-            resp.status = true;
-            resp.message = 'Data Fatch SuccessFull';
-            resp.data = {
-                data: result,
-                limit: limit,
-                page: totalPage,
-                allUser: total 
-            };
-            return res.json(resp);
-        })
     } catch (e) {
         console.log('catch error', e);
         return res.json(resp);

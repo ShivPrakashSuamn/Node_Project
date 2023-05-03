@@ -13,29 +13,30 @@ const index = async (req, res) => {     // index    ----------------------
     var order_type = req.query.order_type ? req.query.order_type : 'desc';
     var offset = 0;
     var total = 0;
-    if (limit) {
-        offset = (page - 1) * limit;
-    }
+    var totalPage = 0;
+
     try {
+        if (limit) {
+            offset = (page - 1) * limit;
+        }
         let sql1 = "SELECT * FROM template where title LIKE '%" + search + "%' order by " + order_by + " " + order_type;
-        await connection.query(sql1, function (err, result1, fields) {
+        await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
             total = result1.length;
-        });
-
-        let sql = "SELECT * FROM template where title LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
-        await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
-            resp.status = true;
-            resp.message = 'Data Fatch SuccessFull';
-            resp.data = {
-                data: result,
-                page: page,
-                total: total
-            };
-
-            // console.log('data = ', resp);
-            return res.json(resp);
+            totalPage = Math.ceil(total/limit);
+            let sql = "SELECT * FROM template where title LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
+            await connection.query(sql, function (err, result, fields) {
+                if (err) throw err;
+                resp.status = true;
+                resp.message = 'Data Fatch SuccessFull';
+                resp.data = {
+                    data: result,
+                    page: page,
+                    total: total,
+                    totalPage: totalPage
+                };
+                return res.json(resp);
+            });
         });
     } catch (e) {
         console.log('Catch error', e);
