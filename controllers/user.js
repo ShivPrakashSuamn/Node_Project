@@ -12,12 +12,14 @@ const index = async (req, res) => {     //  index   --------------------------
     var order_by = req.query.order_by ? req.query.order_by : 'id';
     var order_type = req.query.order_type ? req.query.order_type : 'desc';
     var total = 0;
+    var totalPage = 0;
     var offset = 0;
     try {
         let sql1 = "SELECT users.id,users.fname,users.lname,users.email,users.mobile,users.image,users.created FROM `users` where fname like '%" + search + "%'or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' order by " + order_by + " " + order_type;
         await connection.query(sql1, function (err, result1, fields) {
             if (err) throw err;
             total = result1.length;
+            totalPage = Math.ceil(total/limit);
         });
         let sql = "SELECT users.id,users.fname,users.lname,users.email,users.mobile,users.image,users.created FROM `users` where fname like '%" + search + "%'or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
         await connection.query(sql, function (err, result, fields) {
@@ -27,8 +29,8 @@ const index = async (req, res) => {     //  index   --------------------------
             resp.data = {
                 data: result,
                 limit: limit,
-                page: page,
-                allUser: total
+                page: totalPage,
+                allUser: total 
             };
             return res.json(resp);
         })
