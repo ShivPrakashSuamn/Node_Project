@@ -16,31 +16,31 @@ const index = async (req, res) => {     // index    ----------------------
     var order_type = req.query.order_type ? req.query.order_type : 'desc';
     var offset = 0;
     let total = 0;
+    let totalPage = 0;
     if (limit) {
         offset = (page - 1) * limit;
     }
     try {
         let sql1 = "SELECT * FROM contact where fname LIKE '%" + search + "%' or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%'or phone LIKE '%" + search + "%'\
                     or address LIKE '%"+ search + "%'or city LIKE '%" + search + "%'or pin_code LIKE '%" + search + "%' order by " + order_by + " " + order_type;
-        await connection.query(sql1, function (err, result1, fields) {
+        await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
-
-            // console.log('total row',result1)
             total = result1.length;
-        });
-        let sql = "SELECT * FROM contact where fname LIKE '%" + search + "%' or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' or phone LIKE '%" + search + "%' \
-                    or address LIKE '%"+ search + "%'or city LIKE '%" + search + "%'or pin_code LIKE '%" + search + "%'order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
-        await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
-            resp.status = true;
-            resp.message = 'Data Fatch SuccessFull';
-            resp.data = {
-                data: result,
-                total: total,
-                page: page
-            };
-            // console.log('data = ', resp);
-            return res.json(resp);
+            totalPage = Math.ceil(total/limit);
+            let sql = "SELECT * FROM contact where fname LIKE '%" + search + "%' or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' or phone LIKE '%" + search + "%' \
+                        or address LIKE '%"+ search + "%'or city LIKE '%" + search + "%'or pin_code LIKE '%" + search + "%'order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
+            await connection.query(sql, function (err, result, fields) {
+                if (err) throw err;
+                resp.status = true;
+                resp.message = 'Data Fatch SuccessFull';
+                resp.data = {
+                    data: result,
+                    total: total,
+                    page: page,
+                    totalPage:totalPage
+                };
+                return res.json(resp);
+            });
         });
     } catch (e) {
         // console.log('Catch error', e);

@@ -19,12 +19,12 @@ const index = async (req, res) => {     // index    ----------------------
         if (limit) {
             offset = (page - 1) * limit;
         }
-        let sql1 = "SELECT * FROM template where title LIKE '%" + search + "%' order by " + order_by + " " + order_type;
+        let sql1 = "SELECT * FROM template where id LIKE '%" + search + "%'or title LIKE '%" + search + "%' order by " + order_by + " " + order_type;
         await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
             total = result1.length;
             totalPage = Math.ceil(total/limit);
-            let sql = "SELECT * FROM template where title LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
+            let sql = "SELECT * FROM template where id LIKE '%" + search + "%'or title LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
             await connection.query(sql, function (err, result, fields) {
                 if (err) throw err;
                 resp.status = true;
@@ -110,7 +110,6 @@ const update = async (req, res) => {   // update   ----------------------
     }
     try {
         if (req.file == undefined) {
-
             let sql = "update template set title='" + req.body.title + "',description='" + req.body.description + "',category='" + req.body.category + "',status='" + 0 + "'where id = " + req.query.id;
             await connection.query(sql, function (err, result, fields) {
                 if (err) throw err;
@@ -123,10 +122,8 @@ const update = async (req, res) => {   // update   ----------------------
             let id = req.query.id;
             let deleteDir = config.BASEURL + `/uploads/templates/${id}`;
             await deleteFolder(deleteDir);  // delete Folder ---- 
-
             let sql = "update template set title='" + req.body.title + "',description='" + req.body.description + "',category='" + req.body.category + "',status='" + 0 + "'where id = " + req.query.id;
             await connection.query(sql, async function (err, result, fields) {
-
                 // Folder create---
                 var dir = config.BASEURL + '/uploads/templates/' + id;
                 await createFolder(dir);
