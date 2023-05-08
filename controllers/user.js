@@ -73,7 +73,6 @@ const store = async (req, res) => {     //  Store   --------------------------
         var hash = bcrypt.hashSync(password, salt);
         let sql1 = "SELECT * FROM `users` WHERE email = '" + data.email + "'";
         await connection.query(sql1, async (err, result1, fields) => {
-
             if (result1.length) {
                 resp.message = 'Email Already Exist';
                 resp.data = result1;

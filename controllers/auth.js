@@ -56,32 +56,44 @@ const profile = async (req, res) => {      // profile ------------------------
 }
 
 const register = async (req, res) => {     // register  ----------------------
-    let resp = { status: false, message: 'Opps something went wrong', data: null };
-    // Validation ----
+    let resp = { status: false, message: 'Oops something went wromg?', data: null }
     const schema = Joi.object({
-        email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ["com", "net"] }, }),
-        password: Joi.string().min(4).max(8).required(),
         fname: Joi.string().required(),
-        lname: Joi.string().required()
+        lname: Joi.string().required(),
+        password: Joi.string().min(4).max(8).required(),
+        email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ["com", "net"] }, }),
+        mobile: Joi.string().required(),
     }).validate(req.body);
-
     if (schema.error) {
         resp.message = schema.error.details[0].message;
         return res.json(resp);
+    }
+    let fileUplad = '';
+    if (req.file == undefined) {
+        fileUplad = null;
+    } else {
+        fileUplad = req.file.filename;
     }
     try {
         const data = schema.value;
         var salt = bcrypt.genSaltSync(10);
         var hash = bcrypt.hashSync(data.password, salt);
-        // Insert ----    
-        let sql = "INSERT INTO users (fname, lname, email, password) VALUES ('" + data.fname + "', '" + data.lname + "', '" + data.email + "', '" + hash + "')";
-        await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
-            resp.status = true;
-            resp.message = 'Registration SuccessFull';
-            resp.data = result;
-            console.log('resp-', resp);
-            return res.json(resp);
+        let sql1 = "SELECT * FROM `users` WHERE email = '" + data.email + "'";
+        await connection.query(sql1, async (err, result1, fields) => {
+            if (result1.length) {
+                resp.message = 'Email Already Exist';
+                resp.data = result1;
+                return res.json(resp);
+            } else {
+                let sql = "INSERT INTO users (fname,lname,email,password,mobile,image)VALUES('" + data.fname + "','" + data.lname + "','" + data.email + "','" + hash + "','" + `${data.mobile}` + "','" + fileUplad + "')";
+                await connection.query(sql, function (err, result, fields) {
+                    if (err) throw err;
+                    resp.status = true;
+                    resp.message = 'Data Save SuccessFull';
+                    resp.data = result;
+                    return res.json(resp);
+                });
+            }
         });
     } catch (e) {
         console.log('catch error', e);

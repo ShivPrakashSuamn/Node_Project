@@ -17,28 +17,30 @@ const index = async (req, res) => {     // index    ----------------------
     var order_type = req.query.order_type ? req.query.order_type : 'desc';
     var offset = 0;
     let total = 0;
+    let totalPage = 0;
     if (limit) {
         offset = (page - 1) * limit;
     }
     try {
         let sql1 = "SELECT * FROM list where title LIKE '%" + search + "%' or total_contacts LIKE '%" + search + "%' order by " + order_by + " " + order_type;
-        await connection.query(sql1, function (err, result1, fields) {
+        await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
-
-            //console.log('total row',result1)
             total = result1.length;
-        });
-        let sql = "SELECT * FROM list where title LIKE '%" + search + "%' or total_contacts LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
-        await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
-            resp.status = true;
-            resp.message = 'Data Fatch SuccessFull';
-            resp.data = {
-                data: result,
-                total: total,
-                page: page
-            };
-            return res.json(resp);
+            totalPage = Math.ceil(total/limit);
+
+            let sql = "SELECT * FROM list where title LIKE '%" + search + "%' or total_contacts LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
+            await connection.query(sql, function (err, result, fields) {
+                if (err) throw err;
+                resp.status = true;
+                resp.message = 'Data Fatch SuccessFull';
+                resp.data = {
+                    data: result,
+                    total: total,
+                    page: page,
+                    totalPage: totalPage
+                };
+                return res.json(resp);
+            });
         });
     } catch (e) {
         // console.log('Catch error', e);
@@ -258,20 +260,21 @@ const show = async (req, res) => {     // show     ----------------------
     }
     try {
         let sql1 = "SELECT * FROM list_contacts where list_id =" + req.query.id;
-        connection.query(sql1, function (err, result1, fields) {
+        await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
             checkboxData = result1;
-        })
-        let sql = "SELECT * FROM list where id =" + req.query.id;
-        await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
-            resp.status = true;
-            resp.message = 'Row Data Fatch';
-            resp.data = {
-                data: result,
-                checkbox: checkboxData
-            }
-            return res.json(resp);
+
+            let sql = "SELECT * FROM list where id =" + req.query.id;
+            await connection.query(sql, function (err, result, fields) {
+                if (err) throw err;
+                resp.status = true;
+                resp.message = 'Row Data Fatch';
+                resp.data = {
+                    data: result,
+                    checkbox: checkboxData
+                }
+                return res.json(resp);
+            });
         });
     } catch (e) {
         console.log('Catch error', e);
