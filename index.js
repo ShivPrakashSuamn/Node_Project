@@ -1,5 +1,6 @@
 
 var cors = require('cors');
+const jwt = require('./helper/jwt');
 const express = require("express");
 const path = require('path');
 const bodyparser = require('body-parser');
@@ -12,7 +13,7 @@ const userRouter = require('./routes/user');
 const plansRouter = require('./routes/plans');
 const paymentRouter = require('./routes/payment');
 const settingRouter = require('./routes/setting');
-const jwt = require('./helper/jwt');
+const orderRouter = require('./routes/order');
 
 var app = express();
 app.use(jwt);
@@ -31,6 +32,7 @@ app.use('/user', userRouter);
 app.use('/plans', plansRouter);
 app.use('/payment', paymentRouter);
 app.use('/setting', settingRouter);
+app.use('/order', orderRouter);
 
 app.get('/uploads/images/:images', (req, res) => {
     res.sendFile(path.join(__dirname + '/uploads/images/' + req.params.images));
@@ -43,3 +45,5 @@ app.get('/uploads/templates/:folderId/thumbnail.jpg', (req, res) => {
 app.listen(3001, function () {
     console.log("Started application on port %d", 3001);
 });
+
+
