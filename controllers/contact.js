@@ -8,6 +8,7 @@ const { deleteTmpZip } = require('../helper/common');
 const path = require("path");
 
 const index = async (req, res) => {     // index    ----------------------
+    console.log('contect list')
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
     var limit = req.query.limit ? req.query.limit : 10;
     var search = req.query.search ? req.query.search : '';
@@ -15,8 +16,8 @@ const index = async (req, res) => {     // index    ----------------------
     var order_by = req.query.order_by ? req.query.order_by : 'id';
     var order_type = req.query.order_type ? req.query.order_type : 'desc';
     var offset = 0;
-    let total = 0;
-    let totalPage = 0;
+    var total = 0;
+    var totalPage = 0;
     if (limit) {
         offset = (page - 1) * limit;
     }

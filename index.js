@@ -18,7 +18,13 @@ const orderRouter = require('./routes/order');
 var app = express();
 app.use(jwt);
 const homePath = path.join(__dirname, 'controllers');
-app.use(cors())
+var corsOptions = {
+    "origin": "*http://localhost:4200",
+    "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
+    "preflightContinue": false,
+    "optionsSuccessStatus": 204
+}
+app.use(cors(corsOptions))
 
 // const homePath = path.join(__dirname, 'controllers');
 app.use(bodyparser.urlencoded({ extended: true }));

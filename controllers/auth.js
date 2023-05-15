@@ -19,11 +19,9 @@ const login = async (req, res) => {        // Login  -------------------------
             if (bcrypt.compareSync(req.body.password, data[0].password)) {
 
                 let token = jsonwebtoken.sign({ user: data[0] }, config.JWT_SECRET, { expiresIn: '1h' });
-
                 resp.status = true;
                 resp.message = 'Login Success';
                 resp.data = { users: result[0], token: token };
-                console.log('dad->', data);
                 res.json(resp);
             } else {
                 resp.message = 'password not match';
