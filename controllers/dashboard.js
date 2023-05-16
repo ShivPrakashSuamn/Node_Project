@@ -1,5 +1,7 @@
 
+const { resolve } = require('path');
 const connection = require('../helper/db');
+const { rejects } = require('assert');
 
 const index = async (req, res) => {
     const resp = { status: false, message: 'oops something went wrong ?', data: null }
@@ -42,6 +44,7 @@ const index = async (req, res) => {
         console.log('catch error', e);
         return res.json(resp)
     }
+
 }
 
 module.exports = { index }
