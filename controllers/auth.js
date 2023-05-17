@@ -17,11 +17,10 @@ const login = async (req, res) => {        // Login  -------------------------
             let data = JSON.parse(JSON.stringify(result))
             //companer password ------------
             if (bcrypt.compareSync(req.body.password, data[0].password)) {
-
                 let token = jsonwebtoken.sign({ user: data[0] }, config.JWT_SECRET, { expiresIn: '1h' });
                 resp.status = true;
                 resp.message = 'Login Success';
-                resp.data = { users: result[0], token: token };
+                resp.data = { user: result[0], token: token };
                 res.json(resp);
             } else {
                 resp.message = 'password not match';
@@ -35,9 +34,9 @@ const login = async (req, res) => {        // Login  -------------------------
 }
 
 const profile = async (req, res) => {      // profile ------------------------
+    console.log('dad->', req.query.id);
     let resp = { status: false, message: 'Opps something went wrong', data: null };
-    let sql = "select * from users where id =" + req.user.id + "";
-    console.log('dad->', req.user.id);
+    let sql = "select * from users where id ='"+ req.query.id + "'";
     await connection.query(sql, function (err, result, fields) {
         if (err) throw err;
         if (result.length > 0) {

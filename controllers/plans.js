@@ -9,7 +9,7 @@ const index = async (req, res) => {     //  index   --------------------------
     var search = req.query.search ? req.query.search : '';
     var page = req.query.page ? req.query.page : 1;
     var order_by = req.query.order_by ? req.query.order_by : 'id';
-    var order_type = req.query.order_type ? req.query.order_type : 'desc';
+    var order_type = req.query.order_type ? req.query.order_type : 'asc';
     var total = 0;
     var totalPage = 0;
     var offset = 0;
@@ -30,7 +30,7 @@ const index = async (req, res) => {     //  index   --------------------------
                 resp.data = {
                     data: result,
                     page: page,
-                    allUser: total,
+                    allPlan: total,
                     totalPage: totalPage
                 };
                 return res.json(resp);

@@ -26,7 +26,8 @@ const index = async (req, res) => {
                     let sql4 = "SELECT COUNT(id) AS totalTemplate FROM template;";
                     await connection.query(sql4, async (err, result4, fields) => {
                         totalTemplates = result4[0].totalTemplate;
-
+                        
+                        console.log('user----', await allUsers() )
                         resp.status = true;
                         resp.message = 'Count Dashboard All Data Fatch';
                         resp.data = {
@@ -40,6 +41,12 @@ const index = async (req, res) => {
                 });
             });
         });
+        const allUsers = async () => {
+            let sql1 = "SELECT COUNT(id) AS totalUser FROM users;";
+            await connection.query(sql1, async (err, result1, fields) => {
+              return totalUsers = result1[0].totalUser;
+            });
+        }
     } catch (e) {
         console.log('catch error', e);
         return res.json(resp)
