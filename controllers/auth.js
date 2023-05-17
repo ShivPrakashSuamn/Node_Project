@@ -17,7 +17,7 @@ const login = async (req, res) => {        // Login  -------------------------
             let data = JSON.parse(JSON.stringify(result))
             //companer password ------------
             if (bcrypt.compareSync(req.body.password, data[0].password)) {
-                let token = jsonwebtoken.sign({ user: data[0] }, config.JWT_SECRET, { expiresIn: '1h' });
+                let token = jsonwebtoken.sign({ user: data[0] }, config.JWT_SECRET, { expiresIn: '2h' });
                 resp.status = true;
                 resp.message = 'Login Success';
                 resp.data = { user: result[0], token: token };

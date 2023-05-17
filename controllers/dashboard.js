@@ -5,53 +5,116 @@ const { rejects } = require('assert');
 
 const index = async (req, res) => {
     const resp = { status: false, message: 'oops something went wrong ?', data: null }
-    var totalUsers = 0;
-    var totalPlans = 0;
-    var totalPayments = 0;
-    var totalTemplates = 0;
+
     try {
-        //  Total Users --
-        let sql1 = "SELECT COUNT(id) AS totalUser FROM users;";
-        await connection.query(sql1, async (err, result1, fields) => {
-            totalUsers = result1[0].totalUser;
+        resp.status = true;
+        resp.message = 'Count Dashboard All Data Fatch';
+        resp.data = {
+            //  Admin panel
+            totalUsers: await allUsers(),
+            totalPlans: await allPlan(),
+            totalPayments: await allPayments(),
+            totalTemplates: await allTemplates(),
+            //  User Panel 
+            totalContact: await allContact(),
+            totalList: await allList(),
+        };
+        return res.json(resp);
 
-            let sql2 = "SELECT COUNT(id) AS totalPlan FROM plans;";
-            await connection.query(sql2, async (err, result2, fields) => {
-                totalPlans = result2[0].totalPlan;
-
-                let sql3 = "SELECT COUNT(id) AS totalPayment FROM Payment;";
-                await connection.query(sql3, async (err, result3, fields) => {
-                    totalPayments = result3[0].totalPayment;
-
-                    let sql4 = "SELECT COUNT(id) AS totalTemplate FROM template;";
-                    await connection.query(sql4, async (err, result4, fields) => {
-                        totalTemplates = result4[0].totalTemplate;
-                        
-                        console.log('user----', await allUsers() )
-                        resp.status = true;
-                        resp.message = 'Count Dashboard All Data Fatch';
-                        resp.data = {
-                            totalUsers: totalUsers,
-                            totalPlans: totalPlans,
-                            totalPayments: totalPayments,
-                            totalTemplates: totalTemplates
-                        };
-                        return res.json(resp);
-                    });
-                });
-            });
-        });
-        const allUsers = async () => {
-            let sql1 = "SELECT COUNT(id) AS totalUser FROM users;";
-            await connection.query(sql1, async (err, result1, fields) => {
-              return totalUsers = result1[0].totalUser;
-            });
-        }
     } catch (e) {
         console.log('catch error', e);
         return res.json(resp)
     }
+}
+ 
+const allUsers = async () => {      //  Total Users    ---------------------
+    return new Promise(async (resolve, reject) => {
+        let sql = "SELECT COUNT(id) AS totalUser FROM users;";
+        await connection.query(sql, async (err, result, fields) => {
+            if (err) throw err;
+            if (result) {
+                let totalUsers = result[0].totalUser;
+                resolve(totalUsers);
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}
 
+const allPlan = async () => {       //  Total Plans     ---------------------
+    return new Promise(async (resolve, reject) => {
+        let sql = "SELECT COUNT(id) AS totalPlan FROM plans;";
+        await connection.query(sql, async (err, result, fields) => {
+            if (err) throw err;
+            if (result) {
+                let totalPlans = result[0].totalPlan;
+                resolve(totalPlans);
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}
+
+const allPayments = async () => {   //  Total Payments  ---------------------
+    return new Promise(async (resolve, reject) => {
+        let sql = "SELECT COUNT(id) AS totalPayment FROM Payment;";
+        await connection.query(sql, async (err, result, fields) => {
+            if (err) throw err;
+            if (result) {
+                let totalPayments = result[0].totalPayment;
+                resolve(totalPayments);
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}
+
+const allTemplates = async () => {  //  Total Templates   -------------------
+    return new Promise(async (resolve, reject) => {
+        let sql = "SELECT COUNT(id) AS totalTemplate FROM template;";
+        await connection.query(sql, async (err, result, fields) => {
+            if (err) throw err;
+            if (result) {
+                let totalTemplates = result[0].totalTemplate;
+                resolve(totalTemplates);
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}
+
+const allContact = async () => {    //  Total Contact   ---------------------
+    return new Promise(async (resolve, reject) => {
+        let sql = "SELECT COUNT(id) AS totalContact FROM contact;";
+        await connection.query(sql, async (err, result, fields) => {
+            if (err) throw err;
+            if (result) {
+                let totalContact = result[0].totalContact;
+                resolve(totalContact);
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}
+
+const allList = async () => {       //  Total List    -----------------------
+    return new Promise(async (resolve, reject) => {
+        let sql = "SELECT COUNT(id) AS totalList FROM list;";
+        await connection.query(sql, async (err, result, fields) => {
+            if (err) throw err;
+            if (result) {
+                let totalList = result[0].totalList;
+                resolve(totalList);
+            } else {
+                resolve(false);
+            }
+        });
+    });
 }
 
 module.exports = { index }

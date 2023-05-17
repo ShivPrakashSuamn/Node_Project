@@ -14,14 +14,14 @@ const index = async (req, res) => {     //  index   --------------------------
     var totalPage = 0;
     var offset = 0;
     try {
-        if(limit) {
+        if (limit) {
             offset = (page - 1) * limit;
         }
         let sql1 = "SELECT * FROM plans where title like '%" + search + "%'or price LIKE '%" + search + "%'or offer_price LIKE '%" + search + "%' order by " + order_by + " " + order_type;
         await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
             total = result1.length;
-            totalPage = Math.ceil(total/limit);
+            totalPage = Math.ceil(total / limit);
             let sql = "SELECT * FROM plans where title like '%" + search + "%'or price LIKE '%" + search + "%'or offer_price LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
             await connection.query(sql, function (err, result, fields) {
                 if (err) throw err;
@@ -163,20 +163,21 @@ const show = async (req, res) => {      // Show line data ---------------------
     try {
         let cg_Data = '';
         let sql1 = "SELECT * FROM `features` WHERE plan_id =" + req.query.id;
-        await connection.query(sql1, function (err, result1, fields) {
+        await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
             cg_Data = result1;
-        });
-        let sql = "SELECT plans.*, COUNT(features.feature_name) as total_features FROM plans JOIN features ON plans.id = features.plan_id where plans.id =" + req.query.id;
-        await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
-            resp.status = true;
-            resp.message = 'Single Row Data';
-            resp.data = {
-                data: result,
-                category: cg_Data
-            }
-            return res.json(resp);
+
+            let sql = "SELECT plans.*, COUNT(features.feature_name) as total_features FROM plans JOIN features ON plans.id = features.plan_id where plans.id =" + req.query.id;
+            await connection.query(sql, function (err, result, fields) {
+                if (err) throw err;
+                resp.status = true;
+                resp.message = 'Single Row Data';
+                resp.data = {
+                    data: result,
+                    category: cg_Data
+                }
+                return res.json(resp);
+            });
         });
     } catch (e) {
         console.log('catch error', e);
