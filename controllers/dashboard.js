@@ -5,7 +5,6 @@ const { rejects } = require('assert');
 
 const index = async (req, res) => {
     const resp = { status: false, message: 'oops something went wrong ?', data: null }
-
     try {
         resp.status = true;
         resp.message = 'Count Dashboard All Data Fatch';

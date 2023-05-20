@@ -2,6 +2,7 @@ const Joi = require('joi');
 const { json } = require('express');
 const connection = require('../helper/db');
 const bcrypt = require('bcryptjs');
+const { resolve } = require('path');
 
 const index = async (req, res) => {     //  index   --------------------------
     let resp = { status: false, message: 'Oops Something went wrong ?', data: null }
@@ -23,7 +24,7 @@ const index = async (req, res) => {     //  index   --------------------------
             total = result1.length;
             totalPage = Math.ceil(total / limit);
             let sql = "SELECT * FROM plans where title like '%" + search + "%'or price LIKE '%" + search + "%'or offer_price LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
-            await connection.query(sql, function (err, result, fields) {
+            await connection.query(sql, async function (err, result, fields) {
                 if (err) throw err;
                 resp.status = true;
                 resp.message = 'Data Fatch SuccessFull';
@@ -31,7 +32,8 @@ const index = async (req, res) => {     //  index   --------------------------
                     data: result,
                     page: page,
                     allPlan: total,
-                    totalPage: totalPage
+                    totalPage: totalPage,
+                    features: await allFeature()
                 };
                 return res.json(resp);
             });
@@ -39,6 +41,19 @@ const index = async (req, res) => {     //  index   --------------------------
     } catch (e) {
         return res.json(resp);
     }
+}
+const allFeature = async () => {
+    return new Promise(async (resolve, reject) => {
+        let sql = "SELECT plans.id, plans.title, features.feature_name, features.feature_value, features.plan_id, features.status FROM `plans` JOIN `features` ON plans.id = features.plan_id ";
+        await connection.query(sql, (err, result, fields) => {
+            if (err) throw err;
+            if (result) {
+                resolve(result);
+            } else {
+                resolve(false);
+            }
+        });
+    });
 }
 
 const store = async (req, res) => {     //  Store   --------------------------
@@ -185,4 +200,50 @@ const show = async (req, res) => {      // Show line data ---------------------
     }
 }
 
-module.exports = { index, store, update, deleteRow, show }
+const subscription = async (req, res) => {  // Delete Data ------------------------
+    
+    let resp = { status: false, message: 'Oops Something wemt worng ?', data: null }
+    // validation -- 
+    const schema = Joi.object({
+        id: Joi.string().required()
+    }).validate(req.query);
+    if (schema.error) {
+        resp.message = schema.error.details[0].message;
+        return res.json(resp);
+    }
+    console.log('id-----', schema.value)
+    
+  // options = {         //  Payment  Options     --------------------------
+  //   "key": "rzp_test_eEhqxxfnggSTsN",
+  //   "amount": "799",
+  //   "currency": "INR",
+  //   "name": "Besic Plan", //your business name
+  //   "description": "plan description",
+  //   //"image": "https://example.com/your_logo",
+  //   //"callback_url": "https://eneqd3r9zrjok.x.pipedream.net/",
+  //   "prefill": {
+  //     "name": " ", //your customer's name
+  //     "email": " ",
+  //     "contact": " "
+  //   },
+  //   "notes": {
+  //     "address": "Razorpay Corporate Office"
+  //   },
+  //   "theme": {
+  //     "color": "#b51fff"
+  //   }
+  // }
+  
+    try {
+        resp.status = true;
+        resp.message = 'Single Row Data';
+        resp.data = {};
+        return res.json(resp);
+
+    } catch (e) {
+        console.log('catch error', e);
+        return res.json(resp);
+    }
+}
+
+module.exports = { index, store, update, deleteRow, show, subscription }

@@ -8,7 +8,7 @@ const { deleteTmpZip } = require('../helper/common');
 const path = require("path");
 
 const index = async (req, res) => {     // index    ----------------------
-    console.log('contect list')
+
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
     var limit = req.query.limit ? req.query.limit : 10;
     var search = req.query.search ? req.query.search : '';
