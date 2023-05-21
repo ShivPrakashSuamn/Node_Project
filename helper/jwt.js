@@ -6,6 +6,7 @@ const jwt = (req, res, next) => {
         '/auth/login',
         '/auth/register'
     ];
+    
     if (allowURL.includes(req.path)) {
         return next();
     } else {

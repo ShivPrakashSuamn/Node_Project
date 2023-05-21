@@ -62,6 +62,7 @@ const store = async (req, res) => {     //  Store   --------------------------
         title: Joi.string().required(),
         price: Joi.string().required(),
         offer_price: Joi.string().required(),
+        description: Joi.string().required(),
         status: Joi.string().required(),
         features: Joi.array().required()
     }).validate(req.body);
@@ -73,8 +74,8 @@ const store = async (req, res) => {     //  Store   --------------------------
         const data = schema.value;
         const categoryData = schema.value.features;
 
-        let sql = "INSERT INTO plans (admin_id, title, price, offer_price,total_sell,status) VALUES " +
-            "('" + 1 + "','" + data.title + "', '" + data.price + "', '" + data.offer_price + "', '" + 0 + "', '" + data.status + "')";
+        let sql = "INSERT INTO plans (admin_id, title, price, offer_price,total_sell,status,description) VALUES " +
+            "('" + 1 + "','" + data.title + "', '" + data.price + "', '" + data.offer_price + "', '" + 0 + "', '" + data.status + "', '" + data.description + "')";
         await connection.query(sql, async function (err, result, fields) {
             let id = result.insertId;
             for (var i = 0; i < categoryData.length; i++) {
@@ -114,8 +115,8 @@ const update = async (req, res) => {    // Update   ---------------------------
         await connection.query(sql1, async function (err, result, fields) {
             if (err) throw err;
         });
-        let sql = "update plans set `admin_id`='" + req.body.admin_id + "', title='" + req.body.title + "', price='" + req.body.price + "', offer_price='" + req.body.offer_price + "'," +
-            "total_sell='" + req.body.total_sell + "', status='" + req.body.status + "' where id ='" + req.query.id + "'";
+        let sql = "update plans set `admin_id`='"+ req.body.admin_id +"', title='"+ req.body.title +"', price='"+ req.body.price +"', offer_price='"+ req.body.offer_price +"'," +
+            "total_sell='"+ req.body.total_sell +"', status='"+ req.body.status +"', description='"+ req.body.description +"' where id ='" + req.query.id + "'";
         await connection.query(sql, async function (err, result, fields) {
             let id = req.query.id;
             for (var i = 0; i < categoryData.length; i++) {
@@ -201,7 +202,6 @@ const show = async (req, res) => {      // Show line data ---------------------
 }
 
 const subscription = async (req, res) => {  // Delete Data ------------------------
-    
     let resp = { status: false, message: 'Oops Something wemt worng ?', data: null }
     // validation -- 
     const schema = Joi.object({
@@ -211,39 +211,74 @@ const subscription = async (req, res) => {  // Delete Data ---------------------
         resp.message = schema.error.details[0].message;
         return res.json(resp);
     }
-    console.log('id-----', schema.value)
-    
-  // options = {         //  Payment  Options     --------------------------
-  //   "key": "rzp_test_eEhqxxfnggSTsN",
-  //   "amount": "799",
-  //   "currency": "INR",
-  //   "name": "Besic Plan", //your business name
-  //   "description": "plan description",
-  //   //"image": "https://example.com/your_logo",
-  //   //"callback_url": "https://eneqd3r9zrjok.x.pipedream.net/",
-  //   "prefill": {
-  //     "name": " ", //your customer's name
-  //     "email": " ",
-  //     "contact": " "
-  //   },
-  //   "notes": {
-  //     "address": "Razorpay Corporate Office"
-  //   },
-  //   "theme": {
-  //     "color": "#b51fff"
-  //   }
-  // }
-  
+    var id = schema.value;
     try {
+        let settingData = await getSettings();
+        let planData = await getPlans(id);
+        let userData = await getLoginUser(req.user.id);
+        var options = {         //  Payment  Options     --------------------------
+            "key": settingData.key,
+            "amount": planData.price+'00',
+            "currency":settingData.currency,
+            "name": planData.title, //your business name
+            "description":planData.description,
+            //"image": "https://example.com/your_logo",
+            //"callback_url": "https://eneqd3r9zrjok.x.pipedream.net/",
+            "prefill": {
+                "name": userData.fname + " "+userData.lname, //your customer's name
+                "email": userData.email,
+                "contact": userData.mobile
+            },
+            "notes": {
+                "address": settingData.address
+            },
+            "theme": {
+                "color": settingData.theme
+            }
+        }
         resp.status = true;
         resp.message = 'Single Row Data';
-        resp.data = {};
+        resp.data = options;
         return res.json(resp);
 
     } catch (e) {
         console.log('catch error', e);
         return res.json(resp);
     }
+}
+
+const getSettings = () => {
+    return new Promise(async (resolve, reject) => {
+        let sql = "SELECT * FROM `settings`";
+        await connection.query(sql, function (err, result, fields) {
+            let data  = {
+                currency: result[3].value,
+                key: result[4].value,
+                theme: result[5].value,
+                address:result[6].value
+            }
+            resolve(data);
+        });
+    });
+}
+
+const getPlans = async (id) => {
+    return new Promise(async (resolve, reject) => {
+        let sql = "SELECT * FROM `plans` WHERE id =" + id.id;
+        await connection.query(sql, function (err, result, fields) {
+            resolve(result[0]);
+        });
+    });
+}
+
+const getLoginUser = async (id) => {
+    return new Promise(async (resolve, reject) => {
+        let sql = "SELECT * FROM `users` WHERE id =" + id;
+        await connection.query(sql, function (err, result, fields) {
+            //console.log('getUsrError',err)
+            resolve(result[0]);
+        });
+    });
 }
 
 module.exports = { index, store, update, deleteRow, show, subscription }

@@ -22,7 +22,7 @@ const index = async (req, res) => {     //  index   --------------------------
         await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
             total = result1.length;
-            totalPage = Math.ceil(total/limit);
+            totalPage = Math.ceil(total / limit);
 
             let sql = "SELECT users.id,users.fname,users.lname,users.email,users.mobile,users.image,users.created FROM `users` where fname like '%" + search + "%'or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%'or mobile LIKE '%" + search + "%'  order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
             await connection.query(sql, function (err, result, fields) {
@@ -34,7 +34,7 @@ const index = async (req, res) => {     //  index   --------------------------
                     limit: limit,
                     page: page,
                     allUser: total,
-                    totalPage: totalPage 
+                    totalPage: totalPage
                 };
                 return res.json(resp);
             });
@@ -135,18 +135,18 @@ const update = async (req, res) => {    // Update   ---------------------------
                     });
                 }
             } else {
-                let sql2 = "SELECT * FROM `users` WHERE email = '" + req.body.email + "'";
-                await connection.query(sql2, async (err, result2, fields) => {
-                    if (result2.length > 0) {
+                let sql = "SELECT * FROM `users` WHERE email = '" + req.body.email + "'";
+                await connection.query(sql, async (err, result, fields) => {
+                    if (result.length > 0) {
                         resp.message = 'Email Already Exist';
-                        resp.data = result2;
+                        resp.data = result;
                         return res.json(resp);
                     } else {
                         if (req.file == undefined) {
-                            let sql2 = "SELECT users.image FROM `users` where id=" + req.query.id;
-                            await connection.query(sql2, async (err, result2, fields) => {
+                            let sql = "SELECT users.image FROM `users` where id=" + req.query.id;
+                            await connection.query(sql, async (err, result, fields) => {
                                 if (err) throw err;
-                                fileUplad = result2[0].image;
+                                fileUplad = result[0].image;
                                 let sql = "update users set fname='" + req.body.fname + "', lname='" + req.body.lname + "', email='" + req.body.email + "', mobile='" + req.body.mobile + "',image='" + fileUplad + "' where id =" + data.id;
                                 await connection.query(sql, function (err, result, fields) {
                                     if (err) throw err;

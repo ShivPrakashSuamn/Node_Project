@@ -15,14 +15,14 @@ const index = async (req, res) => {     //  index   --------------------------
     var offset = 0;
 
     try {
-        if(limit){
+        if (limit) {
             offset = (page - 1) * limit;
         }
         let sql1 = "SELECT payment.id,plans.title,users.fname,users.lname,payment.payment_id,payment.amount,payment.status,payment.created FROM payment JOIN users JOIN plans ON users.id = payment.user_id and plans.id = payment.plan_id where plan_id like '%" + search + "%'or user_id LIKE '%" + search + "%'or amount LIKE '%" + search + "%' order by " + order_by + " " + order_type;
         await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
             total = result1.length;
-            totalPage = Math.ceil(total/limit);
+            totalPage = Math.ceil(total / limit);
 
             let sql = "SELECT payment.id,plans.title,users.fname,users.lname,payment.payment_id,payment.amount,payment.status,payment.created FROM payment JOIN users JOIN plans ON users.id = payment.user_id and plans.id = payment.plan_id where plan_id like '%" + search + "%'or user_id LIKE '%" + search + "%'or amount LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
             await connection.query(sql, function (err, result, fields) {
@@ -43,13 +43,12 @@ const index = async (req, res) => {     //  index   --------------------------
     }
 }
 
-const store = async (req, res) => {     //  Store   --------------------------
+const confirmPayment = async (req, res) => {     //  Store   --------------------------
     let resp = { status: false, message: 'Oops something went wromg?', data: null }
+    let loginUserId = req.user.id;
     const schema = Joi.object({
         plan_id: Joi.string().required(),
-        user_id: Joi.string().required(),
-        amount: Joi.string().required(),
-        status : Joi.string().required(),
+        payment_id: Joi.string().required()
     }).validate(req.body);
     if (schema.error) {
         resp.message = schema.error.details[0].message;
@@ -57,14 +56,18 @@ const store = async (req, res) => {     //  Store   --------------------------
     }
     try {
         const data = schema.value;
-               
-        let sql = "INSERT INTO payment (plan_id, user_id, payment_id, amount, status) VALUES ('"+ data.plan_id +"','"+ data.user_id +"', '"+0+"', '"+data.amount+"', '"+ data.status +"')";
-        await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
-            resp.status = true;
-            resp.message = 'Data Save SuccessFull';
-            resp.data = result;
-            return res.json(resp);
+        console.log('pey--', loginUserId, data);
+        let sql = "SELECT `plans`.`price` FROM `plans` WHERE id =" + data.plan_id;
+        await connection.query(sql, async (err, result, fields) => {
+            let amount = result[0].price;
+            let sql = "INSERT INTO payment (plan_id,user_id,payment_id,amount,status)VALUES('"+ data.plan_id +"','"+ loginUserId +"', '"+ data.payment_id +"', '"+ amount +"', '1')";
+            await connection.query(sql, function (err, result, fields) {
+                if (err) throw err;
+                resp.status = true;
+                resp.message = 'Payment SuccessFull';
+                resp.data = result;
+                return res.json(resp);
+            });
         });
     } catch (e) {
         console.log('catch error', e);
@@ -84,7 +87,7 @@ const update = async (req, res) => {    // Update   ---------------------------
     }
     try {
         const data = schema.value;
-        let sql = "update payment set status ='"+ req.body.status +"' where id ="+req.query.id;
+        let sql = "update payment set status ='" + req.body.status + "' where id =" + req.query.id;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
@@ -98,7 +101,7 @@ const update = async (req, res) => {    // Update   ---------------------------
     }
 }
 
-const deleteRow = async(req, res) => {  // Delete Data ------------------------
+const deleteRow = async (req, res) => {  // Delete Data ------------------------
     let resp = { status: false, message: 'Oops Something wemt worng ?', data: null }
     // validation -- 
     const schema = Joi.object({
@@ -135,7 +138,7 @@ const show = async (req, res) => {      // Show line data ---------------------
         return res.json(resp);
     }
     try {
-        let features1 ='';
+        let features1 = '';
         let sql1 = "SELECT * FROM features where id=" + req.query.id;
         await connection.query(sql1, function (err, result1, fields) {
             features1 = result1
@@ -157,4 +160,4 @@ const show = async (req, res) => {      // Show line data ---------------------
     }
 }
 
-module.exports = { index, store, update, deleteRow, show }
+module.exports = { index, confirmPayment, update, deleteRow, show }
