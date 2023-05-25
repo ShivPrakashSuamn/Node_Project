@@ -4,9 +4,10 @@ const config = require('../config');
 const jwt = (req, res, next) => {
     let allowURL = [
         '/auth/login',
-        '/auth/register'
+        '/auth/register',
     ];
-    
+   // if(allowURL.includes(req.path)) { express.static(__dirname + '/uploads/images')};
+
     if (allowURL.includes(req.path)) {
         return next();
     } else {

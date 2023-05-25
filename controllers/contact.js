@@ -6,6 +6,7 @@ const fs = require('fs');
 const csv = require('fast-csv');
 const { deleteTmpZip } = require('../helper/common');
 const path = require("path");
+const axios = require('axios');
 
 const index = async (req, res) => {     // index    ----------------------
 
@@ -27,6 +28,7 @@ const index = async (req, res) => {     // index    ----------------------
         await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
             total = result1.length;
+            await curlApi();
             totalPage = Math.ceil(total / limit);
             let sql = "SELECT * FROM contact where fname LIKE '%" + search + "%' or lname LIKE '%" + search + "%'or email LIKE '%" + search + "%' or phone LIKE '%" + search + "%' \
                         or address LIKE '%"+ search + "%'or city LIKE '%" + search + "%'or pin_code LIKE '%" + search + "%'order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
@@ -47,6 +49,17 @@ const index = async (req, res) => {     // index    ----------------------
         // console.log('Catch error', e);
         return res.json(resp);
     }
+}
+const curlApi = async () => {
+    return new Promise(async (resolve, reject) => {
+        axios.get('https://reqres.in/api/users/2').then((result) => {
+            console.log('rusult', result);
+            resolve(result)
+        }).catch((err) => {
+            console.log('err', err);
+            resolve(false)
+        });
+    });
 }
 
 const store = async (req, res) => {    // store    ----------------------
@@ -138,7 +151,7 @@ const CSVstore = async (req, res) => {  // CSVstore  ----------------------
                 let sql = "SELECT * FROM `contact` WHERE email = '" + email + "'";
                 connection.query(sql, async (err, result, fields) => {
                     if (result.length) {
-                        let sql = "update contact set fname='"+ fname +"', lname='" + lname + "', dob='"+ dob +"', phone='"+ phone +"', address='"+ address +"', city='"+ city +"', pin_code='"+ pincode +"', status='"+ status +"' where email ='" + email +"'";
+                        let sql = "update contact set fname='" + fname + "', lname='" + lname + "', dob='" + dob + "', phone='" + phone + "', address='" + address + "', city='" + city + "', pin_code='" + pincode + "', status='" + status + "' where email ='" + email + "'";
                         connection.query(sql, (err, results, fields) => {
                             if (err) {
                                 console.log("Unable to insert item at row 1", i + 1);
