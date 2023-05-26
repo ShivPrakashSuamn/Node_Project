@@ -26,7 +26,7 @@ const index = async (req, res) => {     // index    ----------------------
         await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
             total = result1.length;
-            totalPage = Math.ceil(total/limit);
+            totalPage = Math.ceil(total / limit);
 
             let sql = "SELECT * FROM list where title LIKE '%" + search + "%' or total_contacts LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
             await connection.query(sql, function (err, result, fields) {
@@ -126,8 +126,8 @@ const insertContacts = async (csvData, listId) => { // csv function  -----
             await connection.query(sql1, async (err, result1, fields) => {
                 if (err) throw err;
                 if (result1.length > 0) {
-                    let sql2 = "UPDATE contact SET fname= '"+ item.fname +"', lname='"+ item.lname +"', dob ='"+ format(new Date(item.dob)) +"', phone='"+ item.phone +"', image='null',"+
-                                "address='"+ item.address +"', city='"+ item.city +"', pin_code='"+ item.pin_code +"', status='"+ item.status +"' WHERE email ='"+ item.email +"'";
+                    let sql2 = "UPDATE contact SET fname= '" + item.fname + "', lname='" + item.lname + "', dob ='" + format(new Date(item.dob)) + "', phone='" + item.phone + "', image='null'," +
+                        "address='" + item.address + "', city='" + item.city + "', pin_code='" + item.pin_code + "', status='" + item.status + "' WHERE email ='" + item.email + "'";
                     await connection.query(sql2, async (err, result2, fields) => {
                         if (err) throw err;
                         if (result2) {
@@ -136,7 +136,7 @@ const insertContacts = async (csvData, listId) => { // csv function  -----
                     });
                 } else {
                     let sql3 = "INSERT INTO contact (fname,lname,email,dob,phone,image,address,city,pin_code,status)" +
-                        "VALUES ('"+ item.fname +"','"+ item.lname +"','"+ item.email +"','"+ format(new Date(item.dob)) +"','"+ item.phone +"','"+ null +"','"+ item.address +"','"+ item.city +"','"+ item.pincode +"','"+ item.status +"')";
+                        "VALUES ('" + item.fname + "','" + item.lname + "','" + item.email + "','" + format(new Date(item.dob)) + "','" + item.phone + "','" + null + "','" + item.address + "','" + item.city + "','" + item.pincode + "','" + item.status + "')";
                     await connection.query(sql3, async (err, result3, fields) => {
                         if (err) throw err;
                         if (result3) {
@@ -166,15 +166,15 @@ const insertListContact = async (listid, contactId) => {// csv function --
     });
 }
 const updateList = async (totalCount, correntId) => { // csv function  ----
-    return new Promise(async(resolve, reject) => {
-        let sql = "UPDATE `list` SET `total_contacts` = '" + totalCount+ "' WHERE `id` = '" + correntId + "'";
-        await connection.query(sql, function(err, result, fields){
-           if (err) throw err;
-           if(result) {
-            resolve(true);
-           } else {
-            resolve(false);
-           }
+    return new Promise(async (resolve, reject) => {
+        let sql = "UPDATE `list` SET `total_contacts` = '" + totalCount + "' WHERE `id` = '" + correntId + "'";
+        await connection.query(sql, function (err, result, fields) {
+            if (err) throw err;
+            if (result) {
+                resolve(true);
+            } else {
+                resolve(false);
+            }
         });
     });
 }
@@ -263,19 +263,19 @@ const show = async (req, res) => {     // show     ----------------------
         await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
             checkboxData = result1;
-
-            let sql = "SELECT * FROM list where id =" + req.query.id;
-            await connection.query(sql, function (err, result, fields) {
-                if (err) throw err;
-                resp.status = true;
-                resp.message = 'Row Data Fatch';
-                resp.data = {
-                    data: result,
-                    checkbox: checkboxData
-                }
-                return res.json(resp);
-            });
         });
+        let sql = "SELECT * FROM list where id =" + req.query.id;
+        await connection.query(sql, function (err, result, fields) {
+            if (err) throw err;
+            resp.status = true;
+            resp.message = 'Row Data Fatch';
+            resp.data = {
+                data: result,
+                checkbox: checkboxData
+            }
+            return res.json(resp);
+        });
+
     } catch (e) {
         console.log('Catch error', e);
         return res.json(resp);
