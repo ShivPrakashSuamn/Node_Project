@@ -245,7 +245,7 @@ const subscription = async (req, res) => {  // Delete Data ---------------------
         let userData = await getLoginUser(req.user.id);
         var options = {         //  Payment  Options     --------------------------
             "key": settingData.key,
-            "amount": planData + '00',
+            "amount": planData.amount + '00',
             "currency": settingData.currency,
             "name": planData.title, //your business name
             "description": planData.description,
@@ -267,7 +267,6 @@ const subscription = async (req, res) => {  // Delete Data ---------------------
         resp.message = 'Single Row Data';
         resp.data = options;
         return res.json(resp);
-
     } catch (e) {
         console.log('catch error', e);
         return res.json(resp);
@@ -294,9 +293,15 @@ const getPlans = async (id) => {        //  Plan  get    -----------------
         let sql = "SELECT * FROM `plans` WHERE id =" + id.id;
         await connection.query(sql, function (err, result, fields) {
             if (result[0].offer_price == 'null') {
-                resolve(result[0].price);
+                let amount =  result[0].price;
+                let title =  result[0].title;
+                let description =  result[0].description;
+                resolve({amount,title,description});
             } else {
-                resolve(result[0].offer_price);
+                let amount =  result[0].offer_price;
+                let title =  result[0].title;
+                let description =  result[0].description;
+                resolve({amount,title,description});
             }
         });
     });

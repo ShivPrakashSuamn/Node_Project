@@ -4,6 +4,7 @@ const connection = require('../helper/db');
 const bcrypt = require('bcryptjs');
 const { Curl } = require("node-libcurl");
 const axios = require('axios');
+const Razorpay = require('razorpay');
 
 const index = async (req, res) => {     //  index   --------------------------
     let resp = { status: false, message: 'Oops Something went wrong ?', data: null }
@@ -47,7 +48,6 @@ const index = async (req, res) => {     //  index   --------------------------
 
 const confirmPayment = async (req, res) => {     //  Store   --------------------------
     let resp = { status: false, message: 'Oops something went wromg?', data: null }
-    let loginUserId = req.user.id;
     const schema = Joi.object({
         plan_id: Joi.string().required(),
         payment_id: Joi.string().required()
@@ -58,52 +58,73 @@ const confirmPayment = async (req, res) => {     //  Store   -------------------
     }
     try {
         const data = schema.value;
-        let sql = "SELECT * FROM `payment` WHERE user_id =" + loginUserId;
-        await connection.query(sql, async (err, result, fields) => {
-            if (result.length) {
-                let sql = "SELECT `plans`.`price` FROM `plans` WHERE id =" + data.plan_id;
-                await connection.query(sql, async (err, result, fields) => {
-                    let amount = result[0].price;
-                    let sql = "UPDATE `payment` SET plan_id='" + data.plan_id + "', payment_id='" + data.payment_id + "', amount='" + amount + "' WHERE user_id =" + loginUserId;
-                    await connection.query(sql, async (err, result, fields) => {
-                        if (err) throw err;
-                        resp.status = true;
-                        resp.message = 'Payment SuccessFull';
-                        resp.data = result;
-                        await curlApi(data.payment_id);
-                        return res.json(resp);
-                    });
-                });
-            } else {
-                let sql = "SELECT `plans`.`price` FROM `plans` WHERE id =" + data.plan_id;
-                await connection.query(sql, async (err, result, fields) => {
-                    let amount = result[0].price;
-                    let sql = "INSERT INTO payment (plan_id,user_id,payment_id,amount,status)VALUES('" + data.plan_id + "','" + loginUserId + "', '" + data.payment_id + "', '" + amount + "', '1')";
-                    await connection.query(sql, async function (err, result, fields) {
-                        if (err) throw err;
-                        resp.status = true;
-                        resp.message = 'Payment SuccessFull';
-                        resp.data = result;
-                       await curlApi(data.payment_id);
-                        return res.json(resp);
-                    });
-                });
-            }
-        });
+        let plan = await getPlan(data.plan_id);
+        let verifyPayment = await capturePayment(data.payment_id, plan);
+        if (verifyPayment) {
+            let payment = await insertPayment(plan, data.payment_id);
+            resp.status = true;
+            resp.message = 'Payment SuccessFull';
+            resp.data = payment;
+            return res.json(resp);
+        } else {
+            resp.message = 'Payment not Valid';
+            return res.json(resp);
+        }
     } catch (e) {
         console.log('catch error', e);
         return res.json(resp);
     }
 }
 
-const curlApi = async (key) => {
+const getPlan = async (id) => {
     return new Promise(async (resolve, reject) => {
-        axios.post(`https://api.razorpay.com/v1/payments/${key}/capture`).then((result) => {
-            console.log('rusult--', result);
-            resolve(result)
+        let sql = "SELECT * FROM `plans` WHERE id =" + id;
+        await connection.query(sql, async (err, result, fields) => {
+            if (err) throw err;
+            if (result) {
+                resolve(result[0]);
+            } else {
+                reject(false);
+            }
+        });
+    });
+}
+
+const capturePayment = async (key, plan) => {
+   // console.log('peyment---KEY', key)
+    return new Promise(async (resolve, reject) => {
+        const headers = {
+            'Content-Type': 'application/json',
+            'rzp_test_EgSXZmLh74nVRQ': 'k5jNT9GNLfckHQysBkjjeAO5'
+        }
+        const data = {
+            "amount": plan.price,
+            "currency": "INR"
+        }
+        axios.Post(`https://api.razorpay.com/v1/payments/${key}/capture`, data, headers).then((result) => {
+            console.log('rusult--', result.response);
+            resolve(result.response)
         }).catch((err) => {
-            console.log('err--', err);
-            resolve(false)
+            console.log('err--', err.response);
+            reject(false)
+        });
+    });
+}
+
+
+const insertPayment = async (plan, paymentId) => {
+    console.log('insrt---', plan)
+    let loginUserId = req.user.id;
+    return new Promise(async (resolve, reject) => {
+        let sql = "INSERT INTO payment (plan_id,user_id,payment_id,amount,status)VALUES('" + plan.plan_id + "','" + loginUserId + "', '" + paymentId + "', '" + plan.price + "', '1')";
+        await connection.query(sql, async function (err, result, fields) {
+            if (err) throw err;
+            if (result) {
+                console.log('insrt---22', result)
+                resolve(result);
+            } else {
+                reject(false);
+            }
         });
     });
 }
