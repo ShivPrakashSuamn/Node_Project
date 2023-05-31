@@ -64,7 +64,7 @@ const activePlan = async (id) => {      //  Active plan  ---------------------
         await connection.query(sql, (err, result, fields) => {
             if (err) throw err;
             if (result.length) {
-                resolve(result[0].plan_id);
+                resolve(result);
             } else {
                 resolve(false);
             }
@@ -76,6 +76,7 @@ const store = async (req, res) => {     //  Store   --------------------------
     let resp = { status: false, message: 'Oops something went wromg?', data: null }
     const schema = Joi.object({
         title: Joi.string().required(),
+        offer_price: Joi.string().required(),
         price: Joi.string().required(),
         description: Joi.string().required(),
         status: Joi.string().required(),
@@ -292,7 +293,7 @@ const getPlans = async (id) => {        //  Plan  get    -----------------
     return new Promise(async (resolve, reject) => {
         let sql = "SELECT * FROM `plans` WHERE id =" + id.id;
         await connection.query(sql, function (err, result, fields) {
-            if (result[0].offer_price == 'null') {
+            if (result[0].offer_price == 0) {
                 let amount =  result[0].price;
                 let title =  result[0].title;
                 let description =  result[0].description;

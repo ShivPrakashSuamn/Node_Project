@@ -13,6 +13,7 @@ const userRouter = require('./routes/user');
 const plansRouter = require('./routes/plans');
 const paymentRouter = require('./routes/payment');
 const settingRouter = require('./routes/setting');
+const compaignRouter = require('./routes/compaign');
 
 var app = express();
 app.use(jwt);
@@ -37,14 +38,16 @@ app.use('/user', userRouter);
 app.use('/plans', plansRouter);
 app.use('/payment', paymentRouter);
 app.use('/setting', settingRouter);
+app.use('/compaign', compaignRouter);
 
 app.get('/uploads/images/:images', (req, res) => {
     res.sendFile(path.join(__dirname + '/uploads/images/' + req.params.images));
 })
 
-app.get('/uploads/templates/:folderId/thumbnail.jpg', (req, res) => {
-    res.sendFile(path.join(__dirname + '/uploads/templates/' + req.params.folderId + '/thumbnail.jpg'));
+app.get('/uploads/templates/:folderId/:imageName', (req, res) => {
+    res.sendFile(path.join(__dirname + '/uploads/templates/' + req.params.folderId + '/'+req.params.imageName));
 })
+
 
 app.listen(3001, function () {
     console.log("Started application on port %d", 3001);

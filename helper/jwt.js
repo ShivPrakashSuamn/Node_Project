@@ -5,10 +5,9 @@ const jwt = (req, res, next) => {
     let allowURL = [
         '/auth/login',
         '/auth/register',
+        '/uploads'
     ];
-   // if(allowURL.includes(req.path)) { express.static(__dirname + '/uploads/images')};
-
-    if (allowURL.includes(req.path)) {
+    if (allowURL.includes(req.path) || (req.path.search(/uploads/) > -1?true:false)) {
         return next();
     } else {
         let resp = { status: false, message: 'unauthorization request', data: null };

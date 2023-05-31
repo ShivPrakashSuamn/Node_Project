@@ -59,17 +59,11 @@ const confirmPayment = async (req, res) => {     //  Store   -------------------
     try {
         const data = schema.value;
         let plan = await getPlan(data.plan_id);
-        let verifyPayment = await capturePayment(data.payment_id, plan);
-        if (verifyPayment) {
-            let payment = await insertPayment(plan, data.payment_id);
-            resp.status = true;
-            resp.message = 'Payment SuccessFull';
-            resp.data = payment;
-            return res.json(resp);
-        } else {
-            resp.message = 'Payment not Valid';
-            return res.json(resp);
-        }
+        let payment = await insertPayment(plan, data.payment_id,req);
+        resp.status = true;
+        resp.message = 'Payment SuccessFully !';
+        resp.data = payment;
+        return res.json(resp);
     } catch (e) {
         console.log('catch error', e);
         return res.json(resp);
@@ -90,37 +84,13 @@ const getPlan = async (id) => {
     });
 }
 
-const capturePayment = async (key, plan) => {
-   // console.log('peyment---KEY', key)
-    return new Promise(async (resolve, reject) => {
-        const headers = {
-            'Content-Type': 'application/json',
-            'rzp_test_EgSXZmLh74nVRQ': 'k5jNT9GNLfckHQysBkjjeAO5'
-        }
-        const data = {
-            "amount": plan.price,
-            "currency": "INR"
-        }
-        axios.Post(`https://api.razorpay.com/v1/payments/${key}/capture`, data, headers).then((result) => {
-            console.log('rusult--', result.response);
-            resolve(result.response)
-        }).catch((err) => {
-            console.log('err--', err.response);
-            reject(false)
-        });
-    });
-}
-
-
-const insertPayment = async (plan, paymentId) => {
-    console.log('insrt---', plan)
+const insertPayment = async (plan, paymentId,req) => {
     let loginUserId = req.user.id;
     return new Promise(async (resolve, reject) => {
-        let sql = "INSERT INTO payment (plan_id,user_id,payment_id,amount,status)VALUES('" + plan.plan_id + "','" + loginUserId + "', '" + paymentId + "', '" + plan.price + "', '1')";
+        let sql = "INSERT INTO payment (plan_id,user_id,payment_id,amount,status)VALUES('"+ plan.id +"','"+ loginUserId +"', '"+ paymentId +"', '"+ plan.price +"', '1')";
         await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             if (result) {
-                console.log('insrt---22', result)
                 resolve(result);
             } else {
                 reject(false);
