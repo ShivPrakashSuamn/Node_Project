@@ -48,9 +48,10 @@ app.get('/uploads/templates/:folderId/:imageName', (req, res) => {
     res.sendFile(path.join(__dirname + '/uploads/templates/' + req.params.folderId + '/'+req.params.imageName));
 })
 
+app.get('/uploads/userTemplates/:folderId/:imageName', (req, res) => {
+    res.sendFile(path.join(__dirname + '/uploads/userTemplates/' + req.params.folderId + '/'+req.params.imageName));
+})
 
 app.listen(3001, function () {
     console.log("Started application on port %d", 3001);
 });
-
-

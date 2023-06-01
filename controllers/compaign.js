@@ -1,7 +1,7 @@
 const Joi = require('joi');
 const config = require('../config');
 const connection = require('../helper/db');
-const { opne_zip, createFolder, folderExist, deleteTmpZip, deleteFolder } = require('../helper/common');
+const { opne_zip, createFolder, copyPasteFolder, deleteFolder } = require('../helper/common');
 
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
@@ -18,12 +18,12 @@ const index = async (req, res) => {     // index    ----------------------
         if (limit) {
             offset = (page - 1) * limit;
         }
-        let sql1 = "SELECT * FROM template where id LIKE '%" + search + "%'or title LIKE '%" + search + "%' order by " + order_by + " " + order_type;
+        let sql1 = "SELECT * FROM compaign where id LIKE '%" + search + "%'or title LIKE '%" + search + "%' order by " + order_by + " " + order_type;
         await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
             total = result1.length;
             totalPage = Math.ceil(total / limit);
-            let sql = "SELECT * FROM template where id LIKE '%" + search + "%'or title LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
+            let sql = "SELECT * FROM compaign where id LIKE '%" + search + "%'or title LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
             await connection.query(sql, function (err, result, fields) {
                 if (err) throw err;
                 resp.status = true;
@@ -88,20 +88,28 @@ const update = async (req, res) => {   // update   ----------------------
     const data = schema.value;
     try {
         // Folder create---
-        let id = data.id;
-        var dir = config.BASEURL +'/uploads/compaign/' + id;
+        let cam_id = data.id;
+        let template_id = req.body.template_id;
+        var dir = config.BASEURL +'/uploads/userTemplates/' + cam_id;
         await createFolder(dir);
+        
+        // Old Template Copy paste -------
+        const coypPath = config.BASEURL +`/uploads/templates/${template_id}`;
+        await copyPasteFolder(coypPath, dir);
 
-        let sql = "update compaign set template_id ='" + req.body.template_id + "' where id =" + data.id;
-        console.log('sql--',sql)
-
-        // await connection.query(sql, function (err, result, fields) {
-        //     if (err) throw err;
-        //     resp.status = true;
-        //     resp.message = 'Update data Successfull';
-        //     resp.data = result;
-        //     return res.json(resp);
-        // });
+        // repo path  add table,  
+        var repo_pat = '/uploads/userTemplates/' + cam_id;
+        var index_pat = '/uploads/userTemplates/' + cam_id + '/index.html';
+        var thumb_pat = '/uploads/userTemplates/' + cam_id + '/thumbnail.jpg';
+        var draft_pat = '/uploads/userTemplates/' + cam_id + '/draft.html';
+        let sql = "update compaign set template_id ='"+ template_id +"', repo_path='" + repo_pat + "',index_path='" + index_pat + "',thumbnail_path='" + thumb_pat + "',draft_path='" + draft_pat + "',status='1' where id = '" + data.id +"'";
+        await connection.query(sql, function (err, result, fields) {
+            if (err) throw err;
+            resp.status = true;
+            resp.message = 'Template Save Successfull';
+            resp.data = result;
+            return res.json(resp);
+        });
     } catch (e) {
         resp.message = 'Error Update System';
         return res.json(resp);
@@ -120,7 +128,7 @@ const deleteRow = async (req, res) => {// delete   ----------------------
         return res.json(resp);
     }
     try {
-        let sql = "DELETE FROM contact where id = " + req.query.id;
+        let sql = "DELETE FROM compaign where id = " + req.query.id;
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;

@@ -1,7 +1,8 @@
-const extract = require('extract-zip');
 var fs = require('fs');
+const fse = require('fs-extra');
+const extract = require('extract-zip');
 
-// zip file extact ---
+// zip file extact ----------
 const opne_zip = async (source, target) => {
     console.log('open_zip')
     try {
@@ -14,13 +15,13 @@ const opne_zip = async (source, target) => {
     }
 }
 
-// Delete Folder ----
+// Delete Folder ------------
 const deleteFolder = async (file_path) => {
     await fs.rm(file_path, { recursive: true, force: true }, err => { });
     return true;
 }
 
-// new Folder generate --
+// new Folder generate ------
 const createFolder = async (path) => {
     try {
         await fs.mkdirSync(path, 0777);
@@ -34,7 +35,7 @@ const folderExist = async (path) => {
     return fs.existsSync(path);
 }
 
-// Delete file ----
+// Delete file  --------------
 const deleteTmpZip = async (file_path) => {
     // console.log('delete path-', file_path);
     if (folderExist(file_path)) {
@@ -55,4 +56,14 @@ const format = (date) => {
     return `${year}-${month}-${day}`
 }
 
-module.exports = { opne_zip, createFolder, folderExist, deleteTmpZip, format, deleteFolder };
+// Copy Paste Folder ---------
+const copyPasteFolder = async (coypPath, pastePath) => {
+    try {
+        await fse.copySync(coypPath, pastePath, { overwrite: true | false })
+        console.log('Copy Paste success!')
+    } catch (err) {
+        console.error(err)
+    }
+}
+
+module.exports = { opne_zip, createFolder, folderExist, deleteTmpZip, format, deleteFolder, copyPasteFolder };
