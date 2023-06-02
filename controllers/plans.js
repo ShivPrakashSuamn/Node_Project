@@ -60,7 +60,7 @@ const allFeature = async () => {        //  Get feature  ---------------------
 
 const activePlan = async (id) => {      //  Active plan  ---------------------
     return new Promise(async (resolve, reject) => {
-        let sql = "SELECT payment.plan_id FROM `payment` WHERE user_id =" + id;
+        let sql = "SELECT payment.plan_id, payment.status FROM `payment` WHERE user_id =" + id;
         await connection.query(sql, (err, result, fields) => {
             if (err) throw err;
             if (result.length) {
