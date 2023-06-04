@@ -58,9 +58,11 @@ const sendMail = async (req, res) => {    // Send Mail Function   --------------
     }
     try {
         const data = schema.value;
+        const schedule = req.body.schedule;
+        const loginId = req.user.id;
         let listId = req.body.contacts;
         for (var i = 0; i < listId.length; i++) {
-            await getListContect(listId[i], data.id);
+            await getListContect(listId[i], data.id, loginId, schedule);
         }
         resp.status = true;
         resp.message = 'Mail Send SuccessFull!';
@@ -72,14 +74,14 @@ const sendMail = async (req, res) => {    // Send Mail Function   --------------
         return res.json(resp);
     }
 }
-const getListContect = async (id, compaignId) => { // list get  function  -----------
+const getListContect = async (id, compaignId, loginId, schedule) => { // list get  function  -----------
     return new Promise(async (resolve, reject) => {
         let sql = "SELECT * FROM `list_contacts` WHERE list_id ='" + id + "'";
         await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             if (result) {
                 for (var i = 0; i < result.length; i++) {
-                    let contactEnail = await getContectEmail(result[i].contact_id, compaignId);
+                    let contactEnail = await getContectEmail(result[i].contact_id, compaignId, loginId, schedule);
                     resolve(contactEnail);
                 }
             } else {
@@ -88,17 +90,26 @@ const getListContect = async (id, compaignId) => { // list get  function  ------
         });
     });
 }
-const getContectEmail = async (id, compaignId) => { // Contect Email Get function  ---
+const getContectEmail = async (id, compaignId, loginId, schedule) => { // Contect Email Get function  ---
     return new Promise(async (resolve, reject) => {
         let sql = `SELECT * FROM contact WHERE id =${id}`;
         await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             if (result) {
-                let email = result[0].email;
-                let htmlPath = config.BASEURL + '/files/index2.html';
+                let to_email = result[0].email;
+                let htmlPath = config.BASEURL + '/files/index2.html';  // path html file
                 let html = await fs.readFileSync(htmlPath, 'utf8');
                 let compaignTitle = await getCompaignTitle(compaignId);
-                // await mailSemd(email, compaignTitle, html); 
+                let sql = "INSERT INTO `mail_queue` (user_id,from_mail,to_mail,subject,content,schedule,status) VALUES ('"+ loginId +"','sumanshivprakash742@gmail.com','"+ to_email +"','"+ compaignTitle +"',' html ','" + schedule + "','true')";
+                 await connection.query(sql, async function (err, result, fields) {
+                     let sql1 =  "SELECT * FROM mail_queue WHERE created  = CURDATE()";
+                     await connection.query(sql1, async function (err, result1, fields) {
+                         // if(err) throw err;
+                         console.log('get--', result1);
+                         // await mailSemd(to_email, compaignTitle, html);
+                        });
+                    console.log('inser', result);
+                })
                 resolve(true);
             } else {
                 resolve(false);
