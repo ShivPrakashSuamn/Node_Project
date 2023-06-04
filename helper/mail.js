@@ -1,15 +1,13 @@
 var nodemailer = require('nodemailer');
 const mailSemd = (to, subject, content) => {
-    console.log(to);
-
     let transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 465,
+        host: "smtp.gmail.com",//setting
+        port: 465,//setting
         secure: true,
-        service: 'gmail',
+        service: 'gmail',//setting
         auth: {
-            user: 'sumanshivprakash742@gmail.com',
-            pass: 'dituoixzafhqwrmq'  // leave user and pass blank for now
+            user: 'sumanshivprakash742@gmail.com',//setting
+            pass: 'dituoixzafhqwrmq'  // leave user and pass blank for now //setting
         }
     });
     let html = '<body style="background-color:grey"><table align="center" border="0" cellpadding="0" cellspacing="0" width="550" bgcolor="white" style="border:2px solid black"><tbody><tr><td align="center"><br /><table align="center" border="0" cellpadding="0" cellspacing="0" class="col-550" width="550"><tbody><tr><td>this is my testing mail </td></tr></tbody> </table> </td></tr> </tbody></table></body>';

@@ -45,7 +45,7 @@ const index = async (req, res) => {     // index    ----------------------
     }
 }
 
-const sendMail = async (req, res) => {    // store    ----------------------
+const sendMail = async (req, res) => {    // Send Mail Function   -------------------
     let resp = { status: false, message: 'Oops something went wrong', data: null };
     // Validation ----
     const schema = Joi.object({
@@ -59,42 +59,60 @@ const sendMail = async (req, res) => {    // store    ----------------------
     try {
         const data = schema.value;
         let listId = req.body.contacts;
-        let htmlPath = config.BASEURL + '/files/index2.html';
-        let sql = 'SELECT * FROM `compaign` WHERE id =' + data.id;
-        await connection.query(sql, async function (err, result, fields) {
-            for (var i = 0; i < listId.length; i++) {
-                let html = await fs.readFileSync(htmlPath, 'utf8');
-                let contact = await getContect(listId[i]);
-                await mailSemd(contact.email, result[0].title, html);
-            }
-            resp.status = true;
-            resp.message = 'Data store SuccessFull!';
-            resp.data = [];
-            return res.json(resp);
-        });
-        //     // Insert ---
-        //     let sql = "SELECT list_contacts.id, list_contacts.contact_id FROM list JOIN list_contacts ON list.id = list_contacts.list_id WHERE list.id = data.id;";
-        //     let sql = "SELECT * FROM list_contacts WHERE list_id = data.id";
-        //     await connection.query(sql, function (err, result, fields) {
-        //         let listId = result.insertId;
-        //         if (err) throw err;
-        //         resp.status = true;
-        //         resp.message = 'Data store SuccessFull!';
-        //         resp.data = listId;
-        //         return res.json(resp);
-        //     });
+        for (var i = 0; i < listId.length; i++) {
+            await getListContect(listId[i], data.id);
+        }
+        resp.status = true;
+        resp.message = 'Mail Send SuccessFull!';
+        resp.data = [];
+        return res.json(resp);
+
     } catch (e) {
         console.log('catch error ', e)
         return res.json(resp);
     }
 }
-const getContect = async (id) => { // csv function  ----
+const getListContect = async (id, compaignId) => { // list get  function  -----------
     return new Promise(async (resolve, reject) => {
-        let sql = "SELECT * FROM `contact` WHERE id ='" + id + "'";
-        await connection.query(sql, function (err, result, fields) {
+        let sql = "SELECT * FROM `list_contacts` WHERE list_id ='" + id + "'";
+        await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             if (result) {
-                resolve(result[0]);
+                for (var i = 0; i < result.length; i++) {
+                    let contactEnail = await getContectEmail(result[i].contact_id, compaignId);
+                    resolve(contactEnail);
+                }
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}
+const getContectEmail = async (id, compaignId) => { // Contect Email Get function  ---
+    return new Promise(async (resolve, reject) => {
+        let sql = `SELECT * FROM contact WHERE id =${id}`;
+        await connection.query(sql, async function (err, result, fields) {
+            if (err) throw err;
+            if (result) {
+                let email = result[0].email;
+                let htmlPath = config.BASEURL + '/files/index2.html';
+                let html = await fs.readFileSync(htmlPath, 'utf8');
+                let compaignTitle = await getCompaignTitle(compaignId);
+                // await mailSemd(email, compaignTitle, html); 
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}
+const getCompaignTitle = async (id) => { // Compaigni function  ----
+    return new Promise(async (resolve, reject) => {
+        let sql = `SELECT * FROM compaign WHERE id =${id}`;
+        await connection.query(sql, async function (err, result, fields) {
+            if (err) throw err;
+            if (result) {
+                resolve(result[0].title);
             } else {
                 resolve(false);
             }
