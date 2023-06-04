@@ -1,7 +1,9 @@
 const Joi = require('joi');
+var fs = require('fs');
 const config = require('../config');
 const connection = require('../helper/db');
-const { opne_zip, createFolder, copyPasteFolder, deleteFolder } = require('../helper/common');
+const { createFolder, copyPasteFolder } = require('../helper/common');
+const mailSemd = require('../helper/mail');
 
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
@@ -43,10 +45,67 @@ const index = async (req, res) => {     // index    ----------------------
     }
 }
 
+const sendMail = async (req, res) => {    // store    ----------------------
+    let resp = { status: false, message: 'Oops something went wrong', data: null };
+    // Validation ----
+    const schema = Joi.object({
+        id: Joi.string().required(),
+    }).validate(req.query);
+
+    if (schema.error) {
+        resp.message = schema.error.details[0].message;
+        return res.json(resp);
+    }
+    try {
+        const data = schema.value;
+        let listId = req.body.contacts;
+        let htmlPath = config.BASEURL + '/files/index2.html';
+        let sql = 'SELECT * FROM `compaign` WHERE id =' + data.id;
+        await connection.query(sql, async function (err, result, fields) {
+            for (var i = 0; i < listId.length; i++) {
+                let html = await fs.readFileSync(htmlPath, 'utf8');
+                let contact = await getContect(listId[i]);
+                await mailSemd(contact.email, result[0].title, html);
+            }
+            resp.status = true;
+            resp.message = 'Data store SuccessFull!';
+            resp.data = [];
+            return res.json(resp);
+        });
+        //     // Insert ---
+        //     let sql = "SELECT list_contacts.id, list_contacts.contact_id FROM list JOIN list_contacts ON list.id = list_contacts.list_id WHERE list.id = data.id;";
+        //     let sql = "SELECT * FROM list_contacts WHERE list_id = data.id";
+        //     await connection.query(sql, function (err, result, fields) {
+        //         let listId = result.insertId;
+        //         if (err) throw err;
+        //         resp.status = true;
+        //         resp.message = 'Data store SuccessFull!';
+        //         resp.data = listId;
+        //         return res.json(resp);
+        //     });
+    } catch (e) {
+        console.log('catch error ', e)
+        return res.json(resp);
+    }
+}
+const getContect = async (id) => { // csv function  ----
+    return new Promise(async (resolve, reject) => {
+        let sql = "SELECT * FROM `contact` WHERE id ='" + id + "'";
+        await connection.query(sql, function (err, result, fields) {
+            if (err) throw err;
+            if (result) {
+                resolve(result[0]);
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}
+
 const store = async (req, res) => {    // store    ----------------------
     let resp = { status: false, message: 'Oops something went wrong', data: null };
     // Validation ----
-    console.log('click',req.body)
+    console.log('click', req.body)
     const schema = Joi.object({
         title: Joi.string().required(),
     }).validate(req.body);
@@ -90,11 +149,11 @@ const update = async (req, res) => {   // update   ----------------------
         // Folder create---
         let cam_id = data.id;
         let template_id = req.body.template_id;
-        var dir = config.BASEURL +'/uploads/userTemplates/' + cam_id;
+        var dir = config.BASEURL + '/uploads/userTemplates/' + cam_id;
         await createFolder(dir);
-        
+
         // Old Template Copy paste -------
-        const coypPath = config.BASEURL +`/uploads/templates/${template_id}`;
+        const coypPath = config.BASEURL + `/uploads/templates/${template_id}`;
         await copyPasteFolder(coypPath, dir);
 
         // repo path  add table,  
@@ -102,7 +161,7 @@ const update = async (req, res) => {   // update   ----------------------
         var index_pat = '/uploads/userTemplates/' + cam_id + '/index.html';
         var thumb_pat = '/uploads/userTemplates/' + cam_id + '/thumbnail.jpg';
         var draft_pat = '/uploads/userTemplates/' + cam_id + '/draft.html';
-        let sql = "update compaign set template_id ='"+ template_id +"', repo_path='" + repo_pat + "',index_path='" + index_pat + "',thumbnail_path='" + thumb_pat + "',draft_path='" + draft_pat + "',status='1' where id = '" + data.id +"'";
+        let sql = "update compaign set template_id ='" + template_id + "', repo_path='" + repo_pat + "',index_path='" + index_pat + "',thumbnail_path='" + thumb_pat + "',draft_path='" + draft_pat + "',status='1' where id = '" + data.id + "'";
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
@@ -170,4 +229,4 @@ const show = async (req, res) => {     // show     ----------------------
     }
 }
 
-module.exports = { index, store, update, deleteRow, show };
+module.exports = { index, sendMail, store, update, deleteRow, show };

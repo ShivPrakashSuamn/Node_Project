@@ -6,6 +6,7 @@ const app = Router();
 
 app.get('/', compaignController.index);
 app.post('/store', compaignController.store);
+app.post('/sendMail', compaignController.sendMail);
 app.post('/update', compaignController.update);
 app.get('/delete', compaignController.deleteRow);
 app.get('/show', compaignController.show);

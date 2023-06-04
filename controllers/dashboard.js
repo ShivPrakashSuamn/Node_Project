@@ -15,6 +15,7 @@ const index = async (req, res) => {
             totalPayments: await allPayments(),
             totalTemplates: await allTemplates(),
             //  User Panel 
+            totalCompaign: await allCompaign(),
             totalContact: await allContact(),
             totalList: await allList(),
         };
@@ -86,6 +87,21 @@ const allTemplates = async () => {  //  Total Templates   -------------------
     });
 }
 
+const allCompaign = async () => {       //  Total Compaign -------------------
+    return new Promise(async (resolve, reject) => {
+        let sql = "SELECT COUNT(id) AS totalCompaign FROM compaign;";
+        await connection.query(sql, async (err, result, fields) => {
+            if (err) throw err;
+            if (result) {
+                let totalCompaign = result[0].totalCompaign;
+                resolve(totalCompaign);
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}
+
 const allContact = async () => {    //  Total Contact   ---------------------
     return new Promise(async (resolve, reject) => {
         let sql = "SELECT COUNT(id) AS totalContact FROM contact;";
@@ -115,5 +131,6 @@ const allList = async () => {       //  Total List    -----------------------
         });
     });
 }
+
 
 module.exports = { index }
