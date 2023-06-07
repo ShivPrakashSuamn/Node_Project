@@ -4,6 +4,7 @@ const config = require('../config');
 const connection = require('../helper/db');
 const { createFolder, copyPasteFolder } = require('../helper/common');
 const mailSemd = require('../helper/mail');
+const cron = require('node-cron');
 
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
@@ -60,9 +61,10 @@ const sendMail = async (req, res) => {    // Send Mail Function   --------------
         const data = schema.value;
         const schedule = req.body.schedule;
         const loginId = req.user.id;
+        const publishTime = req.body.publishData;
         let listId = req.body.contacts;
         for (var i = 0; i < listId.length; i++) {
-            await getListContect(listId[i], data.id, loginId, schedule);
+            await getListContect(listId[i], data.id, loginId, schedule, publishTime);
         }
         resp.status = true;
         resp.message = 'Mail Send SuccessFull!';
@@ -74,14 +76,14 @@ const sendMail = async (req, res) => {    // Send Mail Function   --------------
         return res.json(resp);
     }
 }
-const getListContect = async (id, compaignId, loginId, schedule) => { // list get  function  -----------
+const getListContect = async (id, compaignId, loginId, schedule, time) => { // list get  function  -----------
     return new Promise(async (resolve, reject) => {
         let sql = "SELECT * FROM `list_contacts` WHERE list_id ='" + id + "'";
         await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             if (result) {
                 for (var i = 0; i < result.length; i++) {
-                    let contactEnail = await getContectEmail(result[i].contact_id, compaignId, loginId, schedule);
+                    let contactEnail = await getContectEmail(result[i].contact_id, compaignId, loginId, schedule, time);
                     resolve(contactEnail);
                 }
             } else {
@@ -90,26 +92,33 @@ const getListContect = async (id, compaignId, loginId, schedule) => { // list ge
         });
     });
 }
-const getContectEmail = async (id, compaignId, loginId, schedule) => { // Contect Email Get function  ---
+const getContectEmail = async (id, compaignId, loginId, schedule, time) => { // Contect Email Get function  ---
     return new Promise(async (resolve, reject) => {
         let sql = `SELECT * FROM contact WHERE id =${id}`;
         await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             if (result) {
-                let to_email = result[0].email;
-                let htmlPath = config.BASEURL + '/files/index2.html';  // path html file
-                let html = await fs.readFileSync(htmlPath, 'utf8');
-                let compaignTitle = await getCompaignTitle(compaignId);
-                let sql = "INSERT INTO `mail_queue` (user_id,from_mail,to_mail,subject,content,schedule,status) VALUES ('"+ loginId +"','sumanshivprakash742@gmail.com','"+ to_email +"','"+ compaignTitle +"',' html ','" + schedule + "','true')";
-                 await connection.query(sql, async function (err, result, fields) {
-                     let sql1 =  "SELECT * FROM mail_queue WHERE created  = CURDATE()";
-                     await connection.query(sql1, async function (err, result1, fields) {
-                         // if(err) throw err;
-                         console.log('get--', result1);
-                         // await mailSemd(to_email, compaignTitle, html);
-                        });
-                    console.log('inser', result);
-                })
+
+                console.log('click', time)
+
+                // let to_email = result[0].email;
+                // let htmlPath = config.BASEURL + '/files/index2.html';  // path html file
+                // let html = await fs.readFileSync(htmlPath, 'utf8');
+                // let compaignTitle = await getCompaignTitle(compaignId);
+                // let sql = "INSERT INTO `mail_queue` (user_id,from_mail,to_mail,subject,content,schedule,status) VALUES ('" + loginId + "','sumanshivprakash742@gmail.com','" + to_email + "','" + compaignTitle + "',' html ','" + schedule + "','true')";
+                // await connection.query(sql, async function (err, result, fields) {
+                //     console.log('inser', result);
+                //     try {
+                //         await cron.schedule('2 * * * * *', async () => {
+                //             let sql1 = "SELECT * FROM `mail_queue` WHERE created = curdate() limit 2 offset 0;";
+                //             await connection.query(sql1, async function (err, result1, fields) {
+                //                 console.log('get--', result1);
+                //             })
+                //         });
+                //     } catch (err) {
+                //         console.error(err)
+                //     }
+                // });
                 resolve(true);
             } else {
                 resolve(false);

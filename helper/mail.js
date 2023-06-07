@@ -10,7 +10,7 @@ const mailSemd = (to, subject, content) => {
             pass: 'dituoixzafhqwrmq'  // leave user and pass blank for now //setting
         }
     });
-    let html = '<body style="background-color:grey"><table align="center" border="0" cellpadding="0" cellspacing="0" width="550" bgcolor="white" style="border:2px solid black"><tbody><tr><td align="center"><br /><table align="center" border="0" cellpadding="0" cellspacing="0" class="col-550" width="550"><tbody><tr><td>this is my testing mail </td></tr></tbody> </table> </td></tr> </tbody></table></body>';
+   
     let mailOptions = {
         from: 'sumanshivprakash742@gmail.com', // sender address
         to: to, // receiver address

@@ -4,6 +4,8 @@ const connection = require('../helper/db');
 const path = require("path");
 const config = require('../config');
 
+//  ADMIN PAGE ------
+
 const getSetting = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
 
@@ -186,6 +188,8 @@ const show = async (req, res) => {      // Show line data ---------------------
     }
 }
 
+//  USER PAGE  ------
+
 const userIndex = async (req, res) => {     //  index   --------------------------
     let resp = { status: false, message: 'Oops Something went wrong ?', data: null }
     var limit = req.query.limit ? req.query.limit : 10;
@@ -197,16 +201,17 @@ const userIndex = async (req, res) => {     //  index   ------------------------
     var offset = 0;
     var totalPage = 0;
     try {
+        const loginId = req.user.id;
         if (limit) {
             offset = (page - 1) * limit;
         }
-        let sql1 = "SELECT * FROM `user_setting` where  `id` LIKE '%" + search + "%' or `key` LIKE '%" + search + "%' or `type` LIKE '%" + search + "%' order by " + order_by + " " + order_type;
+        let sql1 = "SELECT * FROM `user_setting` where user_id = '"+ loginId +"' and `id` LIKE '%" + search + "%' or `key` LIKE '%" + search + "%' or `type` LIKE '%" + search + "%' order by " + order_by + " " + order_type;
         await connection.query(sql1, async function (err, result1, fields) {
             if (err) throw err;
             total = result1.length;
             totalPage = Math.ceil(total / limit);
 
-            let sql = "SELECT * FROM `user_setting` where  `id` LIKE '%" + search + "%' or `key` LIKE '%" + search + "%' or `type` LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
+            let sql = "SELECT * FROM `user_setting` where user_id = '"+ loginId +"' and `id` LIKE '%" + search + "%' or `key` LIKE '%" + search + "%' or `type` LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
             await connection.query(sql, function (err, result, fields) {
                 if (err) throw err;
                 resp.status = true;
@@ -229,24 +234,24 @@ const userIndex = async (req, res) => {     //  index   ------------------------
 
 const userStore = async (req, res) => {     //  Store   --------------------------
     let resp = { status: false, message: 'Oops something went wromg?', data: null }
-    const schema = Joi.object({
-        key: Joi.string().required(),
-        type: Joi.string().required(),
-    }).validate(req.body);
-    if (schema.error) {
-        resp.message = schema.error.details[0].message;
-        return res.json(resp);
-    }
-    let fileUplad = '';
-    if (req.file == undefined) {
-        fileUplad = null;
+    const data = req.body;
+    const loginId = req.user.id;
+    let file_Text = '';
+    if (data.type == 'Image') {
+        if (req.file == undefined) {
+            file_Text = null;
+        } else {
+            file_Text = req.file.filename;
+        }
     } else {
-        fileUplad = req.file.filename;
+        if (data.value == 'null') {
+            file_Text = null;
+        } else {
+            file_Text = data.value;
+        }
     }
     try {
-        const data = schema.value;
-        const loginId = req.user.id;
-        let sql = "INSERT INTO `user_setting` (`user_id`,`key`, `value`, `type`) VALUES ('" + loginId + "','" + data.key + "','" + fileUplad + "','" + data.type + "')";
+        let sql = "INSERT INTO `user_setting` (`user_id`,`key`, `value`, `type`) VALUES ('" + loginId + "','" + data.key + "','" + file_Text + "','" + data.type + "')";
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
@@ -271,13 +276,26 @@ const userUpdate = async (req, res) => {    // Update   ------------------------
     }
     let fileUplad = '';
     const data = schema.value;
+
     try {
-        if (req.file == undefined) {
-            let sql2 = "SELECT user_setting.value FROM `user_setting` where id=" + req.query.id;
-            await connection.query(sql2, async (err, result2, fields) => {
-                if (err) throw err;
-                fileUplad = result2[0].value;
-                let sql = "update `user_setting` set `key`='" + req.body.key + "', type='" + req.body.type + "',value='" + fileUplad + "' where id =" + data.id;
+        if (data.type == 'Image') {
+            if (req.file == undefined) {
+                let sql2 = "SELECT user_setting.value FROM `user_setting` where id=" + req.query.id;
+                await connection.query(sql2, async (err, result2, fields) => {
+                    if (err) throw err;
+                    fileUplad = result2[0].value;
+                    let sql = "update `user_setting` set `key`='" + req.body.key + "', type='" + req.body.type + "',value='" + fileUplad + "' where id =" + data.id;
+                    await connection.query(sql, function (err, result, fields) {
+                        if (err) throw err;
+                        resp.status = true;
+                        resp.message = 'Update data Successfull';
+                        resp.data = result;
+                        return res.json(resp);
+                    });
+                });
+            } else {
+                fileUplad = req.file.filename;
+                let sql = "update `user_setting` set `key`='" + req.body.key + "', type='" + req.body.type + "', value='" + fileUplad + "' where id =" + data.id;
                 await connection.query(sql, function (err, result, fields) {
                     if (err) throw err;
                     resp.status = true;
@@ -285,10 +303,9 @@ const userUpdate = async (req, res) => {    // Update   ------------------------
                     resp.data = result;
                     return res.json(resp);
                 });
-            });
+            }
         } else {
-            fileUplad = req.file.filename;
-            let sql = "update `user_setting` set `key`='" + req.body.key + "', type='" + req.body.type + "', value='" + fileUplad + "' where id =" + data.id;
+            let sql = "update `user_setting` set `key`='" + req.body.key + "', type='" + req.body.type + "', value='" + req.body.value + "' where id =" + data.id;
             await connection.query(sql, function (err, result, fields) {
                 if (err) throw err;
                 resp.status = true;
@@ -354,4 +371,4 @@ const userShow = async (req, res) => {      // Show line data ------------------
     }
 }
 
-module.exports = { getSetting, index, store, update, deleteRow, show , userIndex,userStore,userUpdate,userDeleteRow,userShow};
+module.exports = { getSetting, index, store, update, deleteRow, show, userIndex, userStore, userUpdate, userDeleteRow, userShow };

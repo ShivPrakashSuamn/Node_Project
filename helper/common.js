@@ -1,6 +1,7 @@
 var fs = require('fs');
 const fse = require('fs-extra');
 const extract = require('extract-zip');
+const cron = require('node-cron');
 
 // zip file extact ----------
 const opne_zip = async (source, target) => {
@@ -48,7 +49,6 @@ const format = (date) => {
     if (!(date instanceof Date)) {
         throw new Error('Invalid "date" argument. You must pass a date instance')
     }
-
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')
@@ -66,4 +66,15 @@ const copyPasteFolder = async (coypPath, pastePath) => {
     }
 }
 
-module.exports = { opne_zip, createFolder, folderExist, deleteTmpZip, format, deleteFolder, copyPasteFolder };
+// Node Cron Function ---------
+const NodeCron = async (coypPath, pastePath) => {
+    try {
+        cron.schedule('2 * * * * *', () => {
+            console.log(' Node-Cron success!') 
+        });
+    } catch (err) {
+        console.error(err)
+    }
+}
+
+module.exports = { opne_zip, createFolder, folderExist, deleteTmpZip, format, deleteFolder, copyPasteFolder, NodeCron };
