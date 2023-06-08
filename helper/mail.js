@@ -1,4 +1,21 @@
 var nodemailer = require('nodemailer');
+const cron = require('node-cron');
+
+const setCron = async () => {
+    console.log('click');
+    try {
+        await cron.schedule('2 * * * * *', async () => {
+            let offset = 0;        
+            let sql1 = `select * from mail_queue where created >= curdate() limit 2 offset ${offset}`;
+            await connection.query(sql1, async function (err, result1, fields) {
+                console.log('get--', result1);
+            });
+            offset++   
+        });
+    } catch (err) {
+        console.error(err)
+    }
+}
 const mailSemd = (to, subject, content) => {
     let transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",//setting
@@ -27,4 +44,4 @@ const mailSemd = (to, subject, content) => {
     });
 }
 
-module.exports = mailSemd;
+module.exports = { mailSemd, setCron };
