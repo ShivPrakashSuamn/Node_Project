@@ -36,7 +36,7 @@ const login = async (req, res) => {        // Login  -------------------------
 const profile = async (req, res) => {      // profile ------------------------
     console.log('dad->', req.query.id);
     let resp = { status: false, message: 'Opps something went wrong', data: null };
-    let sql = "select * from users where id ='"+ req.query.id + "'";
+    let sql = "select * from users where id ='" + req.query.id + "'";
     await connection.query(sql, function (err, result, fields) {
         if (err) throw err;
         if (result.length > 0) {
@@ -135,4 +135,72 @@ const resetpassword = (req, res) => {     // reset   ---------00---------------
 
 }
 
-module.exports = { login, register, forgotpassword, resetpassword, profile };
+const worklog = async (req, res) => {     // reset   ---------00---------------
+
+    var resp = { status: false, message: 'Oops Something went wrong', data: null };
+
+    var limit = req.query.limit ? req.query.limit : 10;
+    var search = req.query.search ? req.query.search : '';
+    var page = req.query.page ? req.query.page : 1;
+    var order_by = req.query.order_by ? req.query.order_by : 'id';
+    var order_type = req.query.order_type ? req.query.order_type : 'desc';
+    var offset = 0;
+    var total = 0;
+    var totalPage = 0;
+    if (limit) {
+        offset = (page - 1) * limit;
+    }
+    try {
+        let sql1 = "SELECT * FROM `worklog` where `title` LIKE '%" + search + "%' order by " + order_by + " " + order_type;
+        await connection.query(sql1, async function (err, result1, fields) {
+            if (err) throw err;
+            total = result1.length;
+            totalPage = Math.ceil(total / limit);
+            let sql = "SELECT * FROM `worklog` where `title` LIKE '%" + search + "%' order by " + order_by + " " + order_type + " limit " + offset + "," + limit;
+            await connection.query(sql, function (err, result, fields) {
+                if (err) throw err;
+                resp.status = true;
+                resp.message = 'Data Fatch SuccessFull';
+                resp.data = {
+                    data: result,
+                    total: total,
+                    page: page,
+                    totalPage: totalPage
+                };
+                return res.json(resp);
+            });
+        });
+    } catch (e) {
+        console.log('Catch error', e);
+        return res.json(resp);
+    }
+}
+
+const worklogStore = async (req, res) => {     // register  ----------------------
+    let resp = { status: false, message: 'Oops something went wromg?', data: null }
+    const schema = Joi.object({
+        title: Joi.string().required(),
+        description: Joi.string().required(),
+    }).validate(req.body);
+    if (schema.error) {
+        resp.message = schema.error.details[0].message;
+        return res.json(resp);
+    }
+    try {
+        const data = schema.value;
+        const loginId = req.user.id
+        let sql = "INSERT worklog (user_id,title,description)VALUES('" + loginId + "','" + data.title + "','" + data.description + "')";
+        await connection.query(sql, function (err, result, fields) {
+            if (err) throw err;
+            resp.status = true;
+            resp.message = 'Data Save SuccessFull';
+            resp.data = result;
+            return res.json(resp);
+        });
+    } catch (e) {
+        console.log('catch error', e);
+        return res.json(resp);
+    }
+}
+
+module.exports = { login, register, forgotpassword, resetpassword, profile, worklog, worklogStore };
