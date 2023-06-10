@@ -5,7 +5,7 @@ const csvtojson = require('csvtojson');
 const fs = require('fs');
 const csv = require('fast-csv');
 const { deleteTmpZip } = require('../helper/common');
-const path = require("path");
+const worklogStore = require("../helper/worklog");
 
 const index = async (req, res) => {     // index    ----------------------
 
@@ -85,12 +85,12 @@ const store = async (req, res) => {    // store    ----------------------
             } else {
                 let sql = "INSERT INTO contact (fname,lname,email,dob,phone,image,address,city,pin_code,status)" +
                     " VALUES ('" + data.fname + "','" + data.lname + "','" + data.email + "','" + data.dob + "','" + data.phone + "','" + fileUplad + "','" + data.address + "','" + data.city + "','" + data.pincode + "',0)";
-                await connection.query(sql, function (err, result, fields) {
+                await connection.query(sql, async function (err, result, fields) {
                     if (err) throw err;
                     resp.status = true;
                     resp.message = 'Data store SuccessFull!';
                     resp.data = result;
-                    //worklog(userId,'contact','create')
+                    await worklogStore(req.user.id,'Contact','Create')
                     return res.json(resp);
                 });
             }

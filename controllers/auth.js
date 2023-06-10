@@ -34,7 +34,6 @@ const login = async (req, res) => {        // Login  -------------------------
 }
 
 const profile = async (req, res) => {      // profile ------------------------
-    console.log('dad->', req.query.id);
     let resp = { status: false, message: 'Opps something went wrong', data: null };
     let sql = "select * from users where id ='" + req.query.id + "'";
     await connection.query(sql, function (err, result, fields) {
@@ -131,11 +130,11 @@ const forgotpassword = async (req, res) => { // forgot  -----------------------
     }
 }
 
-const resetpassword = (req, res) => {     // reset   ---------00---------------
+const resetpassword = (req, res) => {     // reset   --------------------------
 
 }
 
-const worklog = async (req, res) => {     // reset   ---------00---------------
+const worklog = async (req, res) => {     // worlong  ---------------------------
 
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
 
@@ -176,31 +175,4 @@ const worklog = async (req, res) => {     // reset   ---------00---------------
     }
 }
 
-const worklogStore = async (req, res) => {     // register  ----------------------
-    let resp = { status: false, message: 'Oops something went wromg?', data: null }
-    const schema = Joi.object({
-        title: Joi.string().required(),
-        description: Joi.string().required(),
-    }).validate(req.body);
-    if (schema.error) {
-        resp.message = schema.error.details[0].message;
-        return res.json(resp);
-    }
-    try {
-        const data = schema.value;
-        const loginId = req.user.id
-        let sql = "INSERT worklog (user_id,title,description)VALUES('" + loginId + "','" + data.title + "','" + data.description + "')";
-        await connection.query(sql, function (err, result, fields) {
-            if (err) throw err;
-            resp.status = true;
-            resp.message = 'Data Save SuccessFull';
-            resp.data = result;
-            return res.json(resp);
-        });
-    } catch (e) {
-        console.log('catch error', e);
-        return res.json(resp);
-    }
-}
-
-module.exports = { login, register, forgotpassword, resetpassword, profile, worklog, worklogStore };
+module.exports = { login, register, forgotpassword, resetpassword, profile, worklog };
