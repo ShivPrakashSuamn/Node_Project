@@ -24,7 +24,7 @@ const jwt = (req, res, next) => {
         } else {
             res.json(resp);
         }
-    }
+    }  
 }
 
 module.exports = jwt;
