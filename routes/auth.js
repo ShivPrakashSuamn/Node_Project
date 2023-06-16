@@ -8,7 +8,7 @@ app.post('/login', authController.login);
 app.post('/profile', authController.profile);
 app.post('/register',imageUpload, authController.register);
 app.get('/forgot', authController.forgotpassword);
-app.get('/reset', authController.resetpassword);
+app.post('/reset', authController.resetpassword);
 app.get('/worklog', authController.worklog);
 
 module.exports = app;

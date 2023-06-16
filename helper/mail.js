@@ -2,29 +2,26 @@ var nodemailer = require('nodemailer');
 const cron = require('node-cron');
 const connection = require('../helper/db');
 
-const setCron = async (req, res) => {
+const setCron = async () => {
     try {
-        // await cron.schedule('2 * * * * *', async () => {   
-
-            // let loginId = req.user.id;
-            let loginId = 6;
-        
-            let d = new Date();
+        let d = new Date();
         let curDate = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
         let curTime = d.getHours() + ':' + d.getMinutes();
         let sql = `SELECT *from mail_queue WHERE DATE(send_date)= '${curDate}' && send_time <= '${curTime}' && error = '' limit 1`;
         await connection.query(sql, async function (err, result, fields) {
-            let data = result[0]
-            let settingData = await getSetting(loginId);
-            let resultMail = await mailSemd(settingData, data.from_mail, data.to_mail, data.subject, data.content);
-            if (resultMail.status) {
-                let result = resultMail.message;
-                await deleteRow(data.id);
-            } else {
-                await storeError(data.id, resultMail.error);
-            } 
+            if (err) throw err;
+            if (result != '') {
+                let data = result[0];
+                let settingData = await getSetting(data.user_id);
+                let resultMail = await mailSemd(settingData, data.from_mail, data.to_mail, data.subject, data.content);
+                if (resultMail.status) {
+                    let result = resultMail.message;
+                    await deleteRow(data.id);
+                } else {
+                    await storeError(data.id, resultMail.error);
+                }
+            }
         });
-        //  });
     } catch (err) {
         console.error(err)
     }
@@ -36,10 +33,10 @@ const deleteRow = async (id) => {         // delete   ---------------------
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             if (result) {
-                console.log('Delete Row');
+                console.log('Semd Email &&  Delete Row');
                 resolve(true);
             } else {
-                resolve(false);
+                reject(false);
             }
         });
 
@@ -52,7 +49,7 @@ const storeError = async (id, err) => {   // delete   ----------------------
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
             if (result) {
-                console.log('Update Data Row');
+                console.log('Update Data Row Add Error');
                 resolve(true);
             } else {
                 resolve(false);
@@ -104,8 +101,8 @@ const mailSemd = (setting, from, to, subject, content) => {  // Email Send --
         };
         transporter.sendMail(mailOptions, function (err, data) {
             if (err) {
-                console.log('error sending email', err);
-                reject({ status: false, error: err });
+                // console.log('error sending email ----', err);
+                resolve({ status: false, error: err });
             } else {
                 resolve({ status: true, message: 'Email Send SuccessFull' });
             }

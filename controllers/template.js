@@ -3,6 +3,7 @@ const connection = require('../helper/db');
 const path = require("path");
 const config = require('../config');
 const { opne_zip, createFolder, folderExist, deleteTmpZip, deleteFolder } = require('../helper/common');
+const worklogStore = require("../helper/worklog");
 
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
@@ -89,6 +90,7 @@ const store = async (req, res) => {    // store    ----------------------
             resp.status = true;
             resp.message = 'Data store SuccessFull!';
             resp.data = {};//result;
+            await worklogStore(req.user.id,'Template','Create');
             return res.json(resp);
         });
     } catch (e) {
@@ -147,6 +149,7 @@ const update = async (req, res) => {   // update   ----------------------
                 resp.status = true;
                 resp.message = 'Data store SuccessFull!';
                 resp.data = {};//result;
+                await worklogStore(req.user.id,'Template','Update');
                 return res.json(resp);
             });
         }
@@ -169,12 +172,12 @@ const deleteRow = async (req, res) => {// delete   ----------------------
     }
     try {
         let sql = "DELETE FROM template where id = " + req.query.id;
-        await connection.query(sql, function (err, result, fields) {
+        await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Row Delete SuccessFull!';
             resp.data = result;
-            console.log('resp-', resp);
+            await worklogStore(req.user.id,'Tenplate','Delete Row');
             return res.json(resp);
         });
     } catch (e) {

@@ -1,5 +1,6 @@
 
 var cors = require('cors');
+const cron = require('node-cron');
 const jwt = require('./helper/jwt');
 const express = require("express");
 const path = require('path');
@@ -15,6 +16,7 @@ const paymentRouter = require('./routes/payment');
 const settingRouter = require('./routes/setting');
 const compaignRouter = require('./routes/compaign');
 
+const { setCron } = require('./helper/mail');
 var app = express();
 app.use(jwt);
 const homePath = path.join(__dirname, 'controllers');
@@ -55,3 +57,7 @@ app.get('/uploads/userTemplates/:folderId/:imageName', (req, res) => {
 app.listen(3001, function () {
     console.log("Started application on port %d", 3001);
 });
+
+cron.schedule('*/2 * * * * *', async () => {
+    await setCron();
+})

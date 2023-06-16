@@ -7,6 +7,7 @@ const csv = require('fast-csv');
 const path = require("path");
 const { deleteTmpZip } = require('../helper/common');
 const { format } = require('../helper/common')
+const worklogStore = require("../helper/worklog");
 
 const index = async (req, res) => {     // index    ----------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
@@ -65,18 +66,18 @@ const store = async (req, res) => {    // store    ----------------------
     // Insert ---
     try {
         let sql = "INSERT INTO list (title,total_contacts) VALUES ('" + data.title + "','" + data.contacts.length + "')";
-        await connection.query(sql, function (err, result, fields) {
+        await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Data store SuccessFull!';
             resp.data = result;
-            console.log('resp-', result.insertId);
             data.contacts.map(async (i) => {
                 let sql1 = "INSERT INTO list_contacts (list_id,contact_id) VALUES (" + result.insertId + "," + i + ")";
                 await connection.query(sql1, function (err, result, fields) {
                     if (err) throw err;
                 })
             })
+            await worklogStore(req.user.id,'List','Create');
             return res.json(resp);
         });
     } catch (e) {
@@ -111,6 +112,7 @@ const CSVstore = async (req, res) => { // CSVstore  -----------------------
             }
             resp.status = true;
             resp.message = 'CSV Data store SuccessFull!';
+            await worklogStore(req.user.id,'List','CSV File Upload');
             return res.json(resp);
         });
     } catch (e) {
@@ -208,6 +210,7 @@ const update = async (req, res) => {   // update   ----------------------
                     if (err) throw err;
                 })
             })
+            await worklogStore(req.user.id,'List','Update');
             return res.json(resp);
         });
     } catch (e) {
@@ -239,6 +242,7 @@ const deleteRow = async (req, res) => {// delete   ----------------------
             await connection.query(sql1, function (err, result1, fields) {
                 if (err) throw err;
             })
+            await worklogStore(req.user.id,'List','Dekete List');
             return res.json(resp);
         });
     } catch (e) {

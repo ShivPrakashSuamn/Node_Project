@@ -1,10 +1,8 @@
+//  ADMIN PAGE  --------
+
 const Joi = require('joi');
 const { json } = require('express');
 const connection = require('../helper/db');
-const bcrypt = require('bcryptjs');
-const { Curl } = require("node-libcurl");
-const axios = require('axios');
-const Razorpay = require('razorpay');
 
 const index = async (req, res) => {     //  index   --------------------------
     let resp = { status: false, message: 'Oops Something went wrong ?', data: null }
@@ -112,7 +110,7 @@ const update = async (req, res) => {    // Update   ---------------------------
     try {
         const data = schema.value;
         let sql = "update payment set status ='" + req.body.status + "' where id =" + req.query.id;
-        await connection.query(sql, function (err, result, fields) {
+        await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Update data Successfull';

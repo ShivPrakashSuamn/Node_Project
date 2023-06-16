@@ -8,7 +8,6 @@ const { deleteTmpZip } = require('../helper/common');
 const worklogStore = require("../helper/worklog");
 
 const index = async (req, res) => {     // index    ----------------------
-
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
     var limit = req.query.limit ? req.query.limit : 10;
     var search = req.query.search ? req.query.search : '';
@@ -158,8 +157,8 @@ const CSVstore = async (req, res) => {  // CSVstore  ----------------------
                     }
                 });
             }
-            //console.log("All CSV items stored into database successfully ");
         });
+        await worklogStore(req.user.id,'Contact','CSV Upload');
         await deleteTmpZip(fileName);  // delete tmp file
         resp.status = true;
         resp.message = 'All CSV items stored into database successfully ';
@@ -250,6 +249,7 @@ const update = async (req, res) => {   // update   ----------------------
                 });
             }
         });
+        await worklogStore(req.user.id,'Contact','Update');
     } catch (e) {
         console.log('Catch error', e);
         resp.message = 'Error Update System';
@@ -270,12 +270,12 @@ const deleteRow = async (req, res) => {// delete   ----------------------
     }
     try {
         let sql = "DELETE FROM contact where id = " + req.query.id;
-        await connection.query(sql, function (err, result, fields) {
+        await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Row Delete SuccessFull!';
             resp.data = result;
-            // console.log('resp-', resp);
+            await worklogStore(req.user.id,'Contact','Delete Row');
             return res.json(resp);
         });
     } catch (e) {

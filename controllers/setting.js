@@ -3,6 +3,7 @@ const Joi = require('joi');
 const connection = require('../helper/db');
 const path = require("path");
 const config = require('../config');
+const worklogStore = require("../helper/worklog");
 
 //  ADMIN PAGE ------
 
@@ -252,11 +253,12 @@ const userStore = async (req, res) => {     //  Store   ------------------------
     }
     try {
         let sql = "INSERT INTO `user_setting` (`user_id`,`key`, `value`, `type`) VALUES ('" + loginId + "','" + data.key + "','" + file_Text + "','" + data.type + "')";
-        await connection.query(sql, function (err, result, fields) {
+        await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Data Save SuccessFull';
             resp.data = result;
+            await worklogStore(req.user.id,'Setting','Craete');
             return res.json(resp);
         });
     } catch (e) {
@@ -306,7 +308,7 @@ const userUpdate = async (req, res) => {    // Update   ------------------------
             }
         } else {
             let sql = "update `user_setting` set `key`='" + req.body.key + "', type='" + req.body.type + "', value='" + req.body.value + "' where id =" + data.id;
-            await connection.query(sql, function (err, result, fields) {
+            await connection.query(sql, async function (err, result, fields) {
                 if (err) throw err;
                 resp.status = true;
                 resp.message = 'Update data Successfull';
@@ -314,6 +316,7 @@ const userUpdate = async (req, res) => {    // Update   ------------------------
                 return res.json(resp);
             });
         }
+        await worklogStore(req.user.id,'Setting','Update');
     } catch (e) {
         console.log('catch error', e);
         return res.json(resp);
@@ -333,11 +336,12 @@ const userDeleteRow = async (req, res) => {  // Delete Data --------------------
     }
     try {
         let sql = "DELETE FROM user_setting where id = " + req.query.id;
-        await connection.query(sql, function (err, result, fields) {
+        await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Single Row Data';
             resp.data = result;
+            await worklogStore(req.user.id,'Setting','Delete Row');
             return res.json(resp);
         });
     } catch (e) {

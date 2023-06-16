@@ -2,7 +2,8 @@ const Joi = require('joi');
 var fs = require('fs');
 const config = require('../config');
 const connection = require('../helper/db');
-const { createFolder, copyPasteFolder } = require('../helper/common');
+const { createFolder, copyPasteFolder,mysql_real_escape_string } = require('../helper/common');
+const worklogStore = require("../helper/worklog");
 
 const index = async (req, res) => {     // index    -------------------------------
     var resp = { status: false, message: 'Oops Something went wrong', data: null };
@@ -63,12 +64,16 @@ const sendMail = async (req, res) => {  // Send Mail Function  -----------------
         const publishDate = d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
         const publishTime = req.body.publishTime;
         let listId = req.body.contacts;
+        let htmlPath = config.BASEURL + '/files/index2.html';  // path html file
+        let html = await fs.readFileSync(htmlPath, 'utf8');
+
         for (var i = 0; i < listId.length; i++) {
-            await getListContect(listId[i], data.id, loginId, schedule, publishDate, publishTime);
+            await getListContect(listId[i], data.id, loginId, html, schedule, publishDate, publishTime);
         }
         resp.status = true;
         resp.message = 'Mail Send SuccessFull!';
         resp.data = [];
+        await worklogStore(req.user.id,'Compaign','Send Email Contact');
         return res.json(resp);
 
     } catch (e) {
@@ -76,14 +81,14 @@ const sendMail = async (req, res) => {  // Send Mail Function  -----------------
         return res.json(resp);
     }
 }
-const getListContect = async (id, compaignId, loginId, schedule, date, time) => { // list get  function  ------------
+const getListContect = async (id, compaignId, loginId, html, schedule, date, time) => { // list get  function  ------------
     return new Promise(async (resolve, reject) => {
         let sql = "SELECT * FROM `list_contacts` WHERE list_id ='" + id + "'";
         await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             if (result) {
                 for (var i = 0; i < result.length; i++) {
-                    let contactEnail = await getContectEmail(result[i].contact_id, compaignId, loginId, schedule, date, time);
+                    let contactEnail = await getContectEmail(result[i].contact_id, compaignId, loginId, html, schedule, date, time);
                     resolve(contactEnail);
                 }
             } else {
@@ -92,18 +97,17 @@ const getListContect = async (id, compaignId, loginId, schedule, date, time) => 
         });
     });
 }
-const getContectEmail = async (id, compaignId, loginId, schedule, date, time) => { // Contect Email Get function  ---
+const getContectEmail = async (id, compaignId, loginId, html, schedule, date, time) => { // Contect Email Get function  ---
     return new Promise(async (resolve, reject) => {
         let sql = `SELECT * FROM contact WHERE id =${id}`;
         await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             if (result) {
                 let to_email = result[0].email;
-                let htmlPath = config.BASEURL + '/files/index2.html';  // path html file
-                let html = await fs.readFileSync(htmlPath, 'utf8');
                 let compaignTitle = await getCompaignTitle(compaignId);
+                let cleanHTML = await mysql_real_escape_string(html); 
                 let sql = "INSERT INTO `mail_queue` (user_id,from_mail,to_mail,subject,content,schedule,status,send_date,send_time) VALUES ('" + loginId + "','sumanshivprakash742@gmail.com','"
-                + to_email + "','" + compaignTitle + "',' html ','" + schedule + "','true','" + date + "','" + time + "')";
+                + to_email + "','" + compaignTitle + "','"+  cleanHTML +"','" + schedule + "','true','" + date + "','" + time + "')";
                 await connection.query(sql, async function (err, result, fields) {
                     if (err) throw err;
                     if (result) {
@@ -147,12 +151,13 @@ const store = async (req, res) => {    // store    ----------------------
         const data = schema.value;
         // Insert ---
         let sql = "INSERT INTO `compaign` (title) VALUES ('" + data.title + "')";
-        await connection.query(sql, function (err, result, fields) {
+        await connection.query(sql, async function (err, result, fields) {
             let listId = result.insertId;
             if (err) throw err;
             resp.status = true;
             resp.message = 'Data store SuccessFull!';
             resp.data = listId;
+            await worklogStore(req.user.id,'Compaign','Create')
             return res.json(resp);
         });
     } catch (e) {
@@ -191,11 +196,12 @@ const update = async (req, res) => {   // update   ----------------------
         var thumb_pat = '/uploads/userTemplates/' + cam_id + '/thumbnail.jpg';
         var draft_pat = '/uploads/userTemplates/' + cam_id + '/draft.html';
         let sql = "update compaign set template_id ='" + template_id + "', repo_path='" + repo_pat + "',index_path='" + index_pat + "',thumbnail_path='" + thumb_pat + "',draft_path='" + draft_pat + "',status='1' where id = '" + data.id + "'";
-        await connection.query(sql, function (err, result, fields) {
+        await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Template Save Successfull';
             resp.data = result;
+            await worklogStore(req.user.id,'Compaign','Update')
             return res.json(resp);
         });
     } catch (e) {
@@ -217,12 +223,12 @@ const deleteRow = async (req, res) => {// delete   ----------------------
     }
     try {
         let sql = "DELETE FROM compaign where id = " + req.query.id;
-        await connection.query(sql, function (err, result, fields) {
+        await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Row Delete SuccessFull!';
             resp.data = result;
-            // console.log('resp-', resp);
+            await worklogStore(req.user.id,'Compaign','Delete Row')
             return res.json(resp);
         });
     } catch (e) {

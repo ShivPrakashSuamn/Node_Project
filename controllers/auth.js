@@ -130,8 +130,21 @@ const forgotpassword = async (req, res) => { // forgot  -----------------------
     }
 }
 
-const resetpassword = (req, res) => {     // reset   --------------------------
-
+const resetpassword = async (req, res) => {     // reset   --------------------------
+    let resp = { status:false, message:'Oops Somthing went Weong ?', data:null};
+    const schema = Joi.object({
+        oldpass: Joi.string().required(),
+        newpass: Joi.string().required(),
+        conpass: Joi.string().required()
+    }).validate(req.body);
+    if(schema.error){
+        resp.message = schema.error.details[0].message;
+        return res.json(resp);
+    }
+    const data1 = schema.value;
+    let data = JSON.parse(JSON.stringify(data1.oldpass));
+    console.log('data',data)
+    console.log('click', bcrypt.compareSync(data.oldpass, data[0].password))
 }
 
 const worklog = async (req, res) => {     // worlong  ---------------------------

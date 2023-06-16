@@ -3,6 +3,7 @@ const { json } = require('express');
 const connection = require('../helper/db');
 const bcrypt = require('bcryptjs');
 var generator = require('generate-password');
+const worklogStore = require("../helper/worklog");
 
 const index = async (req, res) => {     //  index   --------------------------
     let resp = { status: false, message: 'Oops Something went wrong ?', data: null }
@@ -171,6 +172,7 @@ const update = async (req, res) => {    // Update   ---------------------------
                 });
             }
         });
+        await worklogStore(req.user.id,'Profile','Update');
     } catch (e) {
         console.log('catch error', e);
         return res.json(resp);

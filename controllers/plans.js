@@ -3,6 +3,7 @@ const { json } = require('express');
 const connection = require('../helper/db');
 const bcrypt = require('bcryptjs');
 const { resolve } = require('path');
+const worklogStore = require("../helper/worklog");
 
 const index = async (req, res) => {     //  index   --------------------------
     let resp = { status: false, message: 'Oops Something went wrong ?', data: null }
@@ -113,6 +114,7 @@ const store = async (req, res) => {     //  Store   --------------------------
             resp.status = true;
             resp.message = 'Data Save SuccessFull';
             resp.data = result;
+            await worklogStore(req.user.id,'Plan','Craete');
             return res.json(resp);
         });
     } catch (e) {
@@ -159,6 +161,7 @@ const update = async (req, res) => {    // Update   ---------------------------
                 resp.status = true;
                 resp.message = 'Update data Successfull';
                 resp.data = result;
+                await worklogStore(req.user.id,'Plan','Update');
                 return res.json(resp);
             });
         });
@@ -181,11 +184,12 @@ const deleteRow = async (req, res) => {  // Delete Data ------------------------
     }
     try {
         let sql = "DELETE FROM plans where id = " + req.query.id;
-        await connection.query(sql, function (err, result, fields) {
+        await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             resp.status = true;
             resp.message = 'Single Row Data';
             resp.data = result;
+            await worklogStore(req.user.id,'Plan','Delete Row');
             return res.json(resp);
         });
     } catch (e) {
@@ -267,6 +271,7 @@ const subscription = async (req, res) => {  // Delete Data ---------------------
         resp.status = true;
         resp.message = 'Single Row Data';
         resp.data = options;
+        await worklogStore(req.user.id,'Subscription',`Plan name -${planData.title} (purchose)`);
         return res.json(resp);
     } catch (e) {
         console.log('catch error', e);
