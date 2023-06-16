@@ -25,7 +25,7 @@ const deleteFolder = async (file_path) => {
 // new Folder generate ------
 const createFolder = async (path) => {
     try {
-        await fs.mkdirSync(path, 0777);
+        await fs.mkdirSync(path, 777);
         return true;
     } catch (err) {
         return false;
