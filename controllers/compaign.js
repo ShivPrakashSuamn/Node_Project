@@ -60,15 +60,18 @@ const sendMail = async (req, res) => {  // Send Mail Function  -----------------
         const data = schema.value;
         const schedule = req.body.schedule;
         const loginId = req.user.id;
-        const d = new Date(req.body.publishData);
-        const publishDate = d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+        const listId = req.body.contacts;
         const publishTime = req.body.publishTime;
-        let listId = req.body.contacts;
-        let htmlPath = config.BASEURL + '/files/index2.html';  // path html file
-        let html = await fs.readFileSync(htmlPath, 'utf8');
-
+        let  publishDate = '';
+        if(req.body.publishData == ''){           
+            let d = new Date();
+            publishDate = d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+        } else {
+            const d = new Date(req.body.publishData);
+            publishDate = d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+        }
         for (var i = 0; i < listId.length; i++) {
-            await getListContect(listId[i], data.id, loginId, html, schedule, publishDate, publishTime);
+            await getListContect(listId[i], data.id, loginId, schedule, publishDate, publishTime);
         }
         resp.status = true;
         resp.message = 'Mail Send SuccessFull!';
@@ -81,14 +84,14 @@ const sendMail = async (req, res) => {  // Send Mail Function  -----------------
         return res.json(resp);
     }
 }
-const getListContect = async (id, compaignId, loginId, html, schedule, date, time) => { // list get  function  ------------
+const getListContect = async (id, compaignId, loginId, schedule, date, time) => { // list get  function  ------------
     return new Promise(async (resolve, reject) => {
         let sql = "SELECT * FROM `list_contacts` WHERE list_id ='" + id + "'";
         await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             if (result) {
                 for (var i = 0; i < result.length; i++) {
-                    let contactEnail = await getContectEmail(result[i].contact_id, compaignId, loginId, html, schedule, date, time);
+                    let contactEnail = await getContectEmail_insert(result[i].contact_id, compaignId, loginId, schedule, date, time);
                     resolve(contactEnail);
                 }
             } else {
@@ -97,17 +100,19 @@ const getListContect = async (id, compaignId, loginId, html, schedule, date, tim
         });
     });
 }
-const getContectEmail = async (id, compaignId, loginId, html, schedule, date, time) => { // Contect Email Get function  ---
+const getContectEmail_insert = async (id, compaignId, loginId, schedule, date, time) => { // Contect Email Get function  ---
     return new Promise(async (resolve, reject) => {
         let sql = `SELECT * FROM contact WHERE id =${id}`;
         await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             if (result) {
                 let to_email = result[0].email;
-                let compaignTitle = await getCompaignTitle(compaignId);
+                let compaignGet = await getCompaignTitle(compaignId);
+                let htmlPath = config.BASEURL + compaignGet.index_path;  // path html file
+                let html = await fs.readFileSync(htmlPath, 'utf8');
                 let cleanHTML = await mysql_real_escape_string(html); 
-                let sql = "INSERT INTO `mail_queue` (user_id,from_mail,to_mail,subject,content,schedule,status,send_date,send_time) VALUES ('" + loginId + "','sumanshivprakash742@gmail.com','"
-                + to_email + "','" + compaignTitle + "','"+  cleanHTML +"','" + schedule + "','true','" + date + "','" + time + "')";
+                let sql = "INSERT INTO `mail_queue` (user_id,from_mail,to_mail,subject,content,schedule,status,send_date,send_time,compaign_id) VALUES ('" + loginId + "','sumanshivprakash742@gmail.com','"
+                + to_email + "','" + compaignGet.title + "','"+  cleanHTML +"','" + schedule + "','true','" + date + "','" + time + "','" + compaignGet.id + "')";
                 await connection.query(sql, async function (err, result, fields) {
                     if (err) throw err;
                     if (result) {
@@ -127,7 +132,7 @@ const getCompaignTitle = async (id) => { // Compaigni function  ---------
         await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             if (result) {
-                resolve(result[0].title);
+                resolve(result[0]);
             } else {
                 resolve(false);
             }

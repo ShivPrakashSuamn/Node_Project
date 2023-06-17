@@ -18,6 +18,8 @@ const index = async (req, res) => {
             totalCompaign: await allCompaign(),
             totalContact: await allContact(),
             totalList: await allList(),
+            totalSendMail: await allSendMail(),
+            totalErrorMail: await allerrorMail()
         };
         return res.json(resp);
 
@@ -87,7 +89,7 @@ const allTemplates = async () => {  //  Total Templates   -------------------
     });
 }
 
-const allCompaign = async () => {       //  Total Compaign -------------------
+const allCompaign = async () => {   //  Total Compaign     -------------------
     return new Promise(async (resolve, reject) => {
         let sql = "SELECT COUNT(id) AS totalCompaign FROM compaign;";
         await connection.query(sql, async (err, result, fields) => {
@@ -132,5 +134,34 @@ const allList = async () => {       //  Total List    -----------------------
     });
 }
 
+const allSendMail = async () => {   //  Total email -----------------------
+    return new Promise(async (resolve, reject) => {
+        let sql = "SELECT count(send_mail) AS sendMail FROM `sendmail` WHERE send_mail = 'true'";
+        await connection.query(sql, async (err, result, fields) => {
+            if (err) throw err;
+            if (result) {
+                let data = result[0].sendMail;                
+                resolve(data);
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}
+
+const allerrorMail = async () => {       //  Total List    -----------------------
+    return new Promise(async (resolve, reject) => {
+        let sql ="SELECT count(error_mail) as allerror FROM `sendmail` WHERE error_mail = 'true';";
+        await connection.query(sql, async (err, result, fields) => {
+            if (err) throw err;
+            if (result) {
+                let data = result[0].allerror;
+                resolve(data);
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}
 
 module.exports = { index }

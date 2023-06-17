@@ -58,6 +58,6 @@ app.listen(3001, function () {
     console.log("Started application on port %d", 3001);
 });
 
-cron.schedule('*/2 * * * * *', async () => {
+cron.schedule('*/5 * * * * *', async () => {
     await setCron();
 })

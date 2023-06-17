@@ -4,6 +4,7 @@ const config = require('../config');
 const jwt = (req, res, next) => {
     let allowURL = [
         '/auth/login',
+        '/auth/forgot',
         '/auth/register',
         '/uploads'
     ];

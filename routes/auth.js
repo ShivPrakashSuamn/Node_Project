@@ -7,7 +7,7 @@ const app = Router();
 app.post('/login', authController.login);
 app.post('/profile', authController.profile);
 app.post('/register',imageUpload, authController.register);
-app.get('/forgot', authController.forgotpassword);
+app.post('/forgot', authController.forgotpassword);
 app.post('/reset', authController.resetpassword);
 app.get('/worklog', authController.worklog);
 

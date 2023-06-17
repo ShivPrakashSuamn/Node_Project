@@ -16,15 +16,37 @@ const setCron = async () => {
                 let resultMail = await mailSemd(settingData, data.from_mail, data.to_mail, data.subject, data.content);
                 if (resultMail.status) {
                     let result = resultMail.message;
+                    await emailResultStory( data.to_mail, data.subject,data.compaign_id,1);
                     await deleteRow(data.id);
                 } else {
+                    await emailResultStory( data.to_mail, data.subject,data.compaign_id,0);
                     await storeError(data.id, resultMail.error);
                 }
             }
         });
     } catch (err) {
-        console.error(err)
+        console.error(err);
     }
+}
+
+const emailResultStory = async ( to, sub, id_com, check) => {   // delete   ----------------------
+    return new Promise(async (resolve, reject) => {
+        let sql = '';
+        if(check == 0){
+            sql = "INSERT INTO `sendmail` (`id`, `to`, `subject`, `send_mail`, `error_mail`, `compaign_id`) VALUES (NULL,'"+ to +"','"+ sub +"','false','true','"+ id_com +"')";
+        } else {
+            sql = "INSERT INTO `sendmail` (`id`, `to`, `subject`, `send_mail`, `error_mail`, `compaign_id`) VALUES (NULL,'"+ to +"','"+ sub +"','true','false','"+ id_com +"')";
+        }
+        await connection.query(sql, function (err, result, fields) {
+            if (err) throw err;
+            if (result) {
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        });
+
+    });
 }
 
 const deleteRow = async (id) => {         // delete   ---------------------

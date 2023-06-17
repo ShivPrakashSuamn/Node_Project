@@ -77,6 +77,7 @@ const NodeCron = async (coypPath, pastePath) => {
     }
 }
 
+// Replace itms  -------------
 const mysql_real_escape_string = async (str) => {
     return str.replace(/[\0\x08\x09\x1a\n\r"'\\\%]/g, function (char) {
         switch (char) {
@@ -102,4 +103,4 @@ const mysql_real_escape_string = async (str) => {
     });
 }
 
-module.exports = { opne_zip, createFolder, folderExist, deleteTmpZip, format, deleteFolder, copyPasteFolder, NodeCron,mysql_real_escape_string };
+module.exports = { opne_zip, createFolder, folderExist, deleteTmpZip, format, deleteFolder, copyPasteFolder, NodeCron, mysql_real_escape_string };

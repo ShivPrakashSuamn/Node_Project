@@ -7,9 +7,6 @@ const config = require('../config');
 const login = async (req, res) => {        // Login  -------------------------
     let resp = { status: false, message: 'Opps something went wrong', data: null };
 
-    var salt = bcrypt.genSaltSync(10);
-    var hash = bcrypt.hashSync(req.body.password, salt);
-
     let sql = "select * from users where email ='" + req.body.email + "'";
     await connection.query(sql, function (err, result, fields) {
         if (err) throw err;
@@ -99,52 +96,45 @@ const register = async (req, res) => {     // register  ----------------------
 
 const forgotpassword = async (req, res) => { // forgot  -----------------------
     let resp = { status: false, message: 'oops something went weong?', data: null };
-    // validation ----
-    if (req.query.id) {
-        const schema = Joi.object({
-            id: Joi.string(),
-            password: Joi.string().min(4).max(8).required(),
-        }).validate(req.body);
-
-        if (schema.error) {
-            resp.message = schema.error.details[0].message;
-            return res.json(resp);
-        }
-        const data = schema.value;
-        // Crypt password ---
-        var salt = bcrypt.genSaltSync(10);
-        var hash = bcrypt.hashSync(data.password, salt);
-
-        let sql = "update users set password='" + hash + "'where id =" + req.query.id;
+    if (req.body.oldEmail) {
+        let sql = "SELECT * FROM `users` WHERE email = '" + req.body.oldEmail + "'";
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
-            resp.status = true;
-            resp.message = 'Forgot Password Success';
-            resp.data = result;
-            console.log('resp-', resp);
-            return res.json(resp);
+            if (result.length) {
+                resp.status = true;
+                resp.message = 'Successfull';
+                const salt = bcrypt.genSaltSync(10);
+                const hash  = bcrypt.hashSync((result[0].mobile), salt);
+                resp.data = {
+                    token:hash
+                }
+                return res.json(resp);
+            } else {
+                resp.message = 'Email is Incorrect';
+                return res.json(resp);
+            }
         });
     } else {
-        resp.message = 'id not Found';
+        resp.message = 'Email not Found';
         return res.json(resp);
     }
 }
 
 const resetpassword = async (req, res) => {     // reset   --------------------------
-    let resp = { status:false, message:'Oops Somthing went Weong ?', data:null};
+    let resp = { status: false, message: 'Oops Somthing went Weong ?', data: null };
     const schema = Joi.object({
         oldpass: Joi.string().required(),
         newpass: Joi.string().required(),
         conpass: Joi.string().required()
     }).validate(req.body);
-    if(schema.error){
+    if (schema.error) {
         resp.message = schema.error.details[0].message;
         return res.json(resp);
     }
     const data1 = schema.value;
     let data = JSON.parse(JSON.stringify(data1.oldpass));
-    console.log('data',data)
-    console.log('click', bcrypt.compareSync(data.oldpass, data[0].password))
+    console.log('data', req.headers.authorization)
+    // console.log('click', bcrypt.compareSync(data.oldpass, data[0].password))
 }
 
 const worklog = async (req, res) => {     // worlong  ---------------------------
