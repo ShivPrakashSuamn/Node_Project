@@ -108,12 +108,33 @@ const forgotpassword = async (req, res) => { // forgot  -----------------------
                 resp.data = {
                     token:hash
                 }
+                console.log('token',hash)
                 return res.json(resp);
             } else {
                 resp.message = 'Email is Incorrect';
                 return res.json(resp);
             }
         });
+    } else if (req.body.generateP) {
+        console.log('token',req.body)
+        // let sql = "SELECT * FROM `users` WHERE email = '" + req.body.oldEmail + "'";
+        // await connection.query(sql, function (err, result, fields) {
+        //     if (err) throw err;
+        //     if (result.length) {
+        //         resp.status = true;
+        //         resp.message = 'Successfull';
+        //         const salt = bcrypt.genSaltSync(10);
+        //         const hash  = bcrypt.hashSync((result[0].mobile), salt);
+        //         resp.data = {
+        //             token:hash
+        //         }
+        //         console.log('token',hash)
+                 return res.json(resp);
+        //     } else {
+        //         resp.message = 'Email is Incorrect';
+        //         return res.json(resp);
+        //     }
+        // });
     } else {
         resp.message = 'Email not Found';
         return res.json(resp);
