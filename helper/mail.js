@@ -2,7 +2,7 @@ var nodemailer = require('nodemailer');
 const cron = require('node-cron');
 const connection = require('../helper/db');
 
-const setCron = async () => {
+const setCron = async () => {    // Set Cron  Function   -------------------- 
     try {
         let d = new Date();
         let curDate = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
@@ -16,10 +16,10 @@ const setCron = async () => {
                 let resultMail = await mailSemd(settingData, data.from_mail, data.to_mail, data.subject, data.content);
                 if (resultMail.status) {
                     let result = resultMail.message;
-                    await emailResultStory( data.to_mail, data.subject,data.compaign_id,1);
+                    await emailResultStory(data.to_mail, data.subject, data.compaign_id, 1);
                     await deleteRow(data.id);
                 } else {
-                    await emailResultStory( data.to_mail, data.subject,data.compaign_id,0);
+                    await emailResultStory(data.to_mail, data.subject, data.compaign_id, 0);
                     await storeError(data.id, resultMail.error);
                 }
             }
@@ -29,13 +29,23 @@ const setCron = async () => {
     }
 }
 
-const emailResultStory = async ( to, sub, id_com, check) => {   // delete   ----------------------
+const sendPathMail = async (userData, token, path) => {  //  Forget password send mail Path ------
+    return new Promise(async (resolve, reject) => {
+        let settingData = await getSetting(userData.id);
+        let data = `<a href="${path}?token=${token}"> Reset Page click </a>`;
+        await mailSemd(settingData, settingData.user, userData.email, 'Change Password', data);
+        console.log('clickpath', userData.email)
+        resolve(true);
+    });
+}
+
+const emailResultStory = async (to, sub, id_com, check) => {   //  delete   ----------------------
     return new Promise(async (resolve, reject) => {
         let sql = '';
-        if(check == 0){
-            sql = "INSERT INTO `sendmail` (`id`, `to`, `subject`, `send_mail`, `error_mail`, `compaign_id`) VALUES (NULL,'"+ to +"','"+ sub +"','false','true','"+ id_com +"')";
+        if (check == 0) {
+            sql = "INSERT INTO `sendmail` (`id`, `to`, `subject`, `send_mail`, `error_mail`, `compaign_id`) VALUES (NULL,'" + to + "','" + sub + "','false','true','" + id_com + "')";
         } else {
-            sql = "INSERT INTO `sendmail` (`id`, `to`, `subject`, `send_mail`, `error_mail`, `compaign_id`) VALUES (NULL,'"+ to +"','"+ sub +"','true','false','"+ id_com +"')";
+            sql = "INSERT INTO `sendmail` (`id`, `to`, `subject`, `send_mail`, `error_mail`, `compaign_id`) VALUES (NULL,'" + to + "','" + sub + "','true','false','" + id_com + "')";
         }
         await connection.query(sql, function (err, result, fields) {
             if (err) throw err;
@@ -49,7 +59,7 @@ const emailResultStory = async ( to, sub, id_com, check) => {   // delete   ----
     });
 }
 
-const deleteRow = async (id) => {         // delete   ---------------------
+const deleteRow = async (id) => {         // delete   ----------------------
     return new Promise(async (resolve, reject) => {
         let sql = "DELETE FROM mail_queue where id = " + id;
         await connection.query(sql, function (err, result, fields) {
@@ -81,7 +91,7 @@ const storeError = async (id, err) => {   // delete   ----------------------
     });
 }
 
-const getSetting = async (id) => { // get Setting function  ------------------
+const getSetting = async (id) => { // get Setting function  -----------------
     return new Promise(async (resolve, reject) => {
         let sql = `SELECT * FROM user_setting WHERE user_id =${id}`;
         await connection.query(sql, async function (err, result, fields) {
@@ -132,4 +142,4 @@ const mailSemd = (setting, from, to, subject, content) => {  // Email Send --
     });
 }
 
-module.exports = { mailSemd, setCron };
+module.exports = { mailSemd, setCron, sendPathMail };
