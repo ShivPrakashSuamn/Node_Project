@@ -4,6 +4,7 @@ const Joi = require('joi');
 const jsonwebtoken = require("jsonwebtoken");
 const config = require('../config');
 const { sendPathMail } = require('../helper/mail');
+const worklogStore = require("../helper/worklog");
 
 const login = async (req, res) => {        // Login  -------------------------
     let resp = { status: false, message: 'Opps something went wrong', data: null };
@@ -138,46 +139,60 @@ const saveRevember = async (id, tokne) => {   //  Revember tokne story  --------
 
 const resetpassword = async (req, res) => {  // reset   --------------------------
     let resp = { status: false, message: 'Oops Somthing went Weong ?', data: null };
-    console.log('get --',req.body)
-    const schema = Joi.object({
-        generateP: Joi.string().min(4).max(8).required(),
-        confirmP: Joi.string().min(4).max(8).required(),
-        token: Joi.string()
-    }).validate(req.body);
-    if (schema.error) {
-        resp.message = schema.error.details[0].message;
-        return res.json(resp);
-    }
-    let data = schema.value;
-    let generateP = data.generateP;
-    let token = data.token;
-    let sql = 'SELECT * FROM `users` WHERE revember = "' + token + '"';
-    await connection.query(sql, async function (err, result, fields) {
-        if (err) throw err;
-        if (result[0].revember == token) {
-            await saveForgetPassword(result[0].id, generateP)
-            resp.status = true;
-            resp.message = 'Password Forget Success Full'
-            return res.json(resp);
-        } else {
-            resp.message = 'Token Not Match'
+    //  Reset Password chack     ----------------------------
+    if (req.body.oldpass) {
+        const schema = Joi.object({
+            loginUserEmail: Joi.string().required(),
+            oldpass: Joi.string().required(),
+            newpass: Joi.string().min(4).max(8).required(),
+            conpass: Joi.string().min(4).max(8).required(),
+        }).validate(req.body);
+        if (schema.error) {
+            resp.message = schema.error.details[0].message;
             return res.json(resp);
         }
-    });
-
-    // const schema = Joi.object({
-    //     oldpass: Joi.string().required(),
-    //     newpass: Joi.string().required(),
-    //     conpass: Joi.string().required()
-    // }).validate(req.body);
-    // if (schema.error) {
-    //     resp.message = schema.error.details[0].message;
-    //     return res.json(resp);
-    // }
-    // const data1 = schema.value;
-    // let data = JSON.parse(JSON.stringify(data1.oldpass));
-    // console.log('data', req.headers.authorization)
-    // console.log('click', bcrypt.compareSync(data.oldpass, data[0].password)) 
+        let data = schema.value; 
+        let sql = "select * from users where email ='" + data.loginUserEmail + "'";
+        await connection.query(sql, async function (err, result, fields) {
+            let dataResult = JSON.parse(JSON.stringify(result))
+            if (bcrypt.compareSync(data.oldpass, dataResult[0].password)) {
+                await saveForgetPassword(dataResult[0].id, data.newpass)             
+                resp.status = true;
+                resp.message = 'Reset Password SuccessFull';
+                return res.json(resp);
+            } else {
+                resp.message = 'password not match';
+                return res.json(resp);
+            }
+        });
+    } else {   
+        //  Forget  Password chack  -------------------------
+        const schema = Joi.object({
+            generateP: Joi.string().min(4).max(8).required(),
+            confirmP: Joi.string().min(4).max(8).required(),
+            token: Joi.string()
+        }).validate(req.body);
+        if (schema.error) {
+            resp.message = schema.error.details[0].message;
+            return res.json(resp);
+        }
+        let data = schema.value;
+        let generateP = data.generateP;
+        let token = data.token;
+        let sql = 'SELECT * FROM `users` WHERE revember = "' + token + '"';
+        await connection.query(sql, async function (err, result, fields) {
+            if (err) throw err;
+            if (result[0].revember == token) {
+                await saveForgetPassword(result[0].id, generateP)
+                resp.status = true;
+                resp.message = 'Forget Password Success Full'
+                return res.json(resp);
+            } else {
+                resp.message = 'Token Not Match'
+                return res.json(resp);
+            }
+        });
+    }
 }
 
 const saveForgetPassword = async (id, password) => {   //  Revember tokne story  ----------
@@ -185,9 +200,10 @@ const saveForgetPassword = async (id, password) => {   //  Revember tokne story 
         var salt = bcrypt.genSaltSync(10);
         var hash = bcrypt.hashSync(password, salt);
         let sql = "update users set password='" + hash + "' where id =" + id;
-        await connection.query(sql, function (err, result, fields) {
+        await connection.query(sql, async function (err, result, fields) {
             if (err) throw err;
             if (result) {
+                await worklogStore(id,'User Password','Reset/Forget ? ')
                 resolve(true);
             } else {
                 reject(false);
