@@ -15,8 +15,8 @@ const plansRouter = require('./routes/plans');
 const paymentRouter = require('./routes/payment');
 const settingRouter = require('./routes/setting');
 const compaignRouter = require('./routes/compaign');
-
 const { setCron } = require('./helper/mail');
+
 var app = express();
 app.use(jwt);
 const homePath = path.join(__dirname, 'controllers');
